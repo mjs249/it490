@@ -1,56 +1,59 @@
-  GNU nano 6.2                              register.php                                       
 <?php
-// Enable error reporting for debugging
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+session_start();
 
-// Include RabbitMQ client library files
 require_once('/home/mike/it490/path.inc');
 require_once('/home/mike/it490/get_host_info.inc');
 require_once('/home/mike/it490/rabbitMQLib.inc');
 
-// Check if the form data is submitted
-if (isset($_POST['username']) && isset($_POST['password']) && isset($_POST['email'])) {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    $email = $_POST['email'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($_POST['password']) && isset($_POST['email'])) {
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+    $email = trim($_POST['email']);
 
-    // Hash the password before sending it through RabbitMQ
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    // Create a new RabbitMQ client
     $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
 
-    // Create a request array for registration
-    $request = array();
-    $request['type'] = "register";
-    $request['username'] = $username;
-    $request['password'] = $hashedPassword; // Send the hashed password
-    $request['email'] = $email;             // Include the email
+    $request = [
+        'type' => "register",
+        'username' => $username,
+        'password' => $hashedPassword,
+        'email' => $email
+    ];
 
-    // Send the request to the RabbitMQ server
     $response = $client->send_request($request);
 
-    // Process the response
-    if ($response === true) {
-        echo "Registration successful!";
+    if ($response && isset($response['success']) && $response['success']) {
+        $_SESSION['flash_message'] = 'Registration successful! You may now log in.';
+        header('Location: index.php');
+        exit();
     } else {
-        // Check if the response is an array
-        if (is_array($response)) {
-            // Convert the array to a string for printing
-            $errorMessage = implode(", ", $response);
-            echo "Registration failed: " . $errorMessage;
-        } else {
-            // If the response is not an array, directly print it
-            echo "Registration failed: " . $response;
-        }
+        $errorMessage = isset($response['message']) ? $response['message'] : "Registration failed!";
     }
-} else {
-    echo "Username, Password, and Email are required!";
 }
 ?>
 
-
-
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <script src="passwordValidation.js"></script> <!-- Link to your JavaScript file for validation -->
+</head>
+<body>
+    <h2>Registration Form</h2>
+    <?php if (!empty($errorMessage)) { echo "<p style='color:red'>$errorMessage</p>"; } ?>
+    <form action="register.php" method="post" onsubmit="return validateForm()">
+        Username: <input type="text" name="username" required><br>
+        Email: <input type="email" name="email" required><br>
+        Password: <input type="password" name="password" id="password" required 
+                 pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
+                 title="Must contain at least one number, one uppercase and lowercase letter, and at least 8 or more characters"><br>
+        Confirm Password: <input type="password" name="confirm_password" id="confirm_password" required><br>
+        <span id="message"></span><br>
+        <input type="submit" value="Register">
+    </form>
+    <p>Already have an account? <a href="index.php">Log in here</a>.</p>
+</body>
+</html>
