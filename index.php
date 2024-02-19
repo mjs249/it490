@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($
     $response = $client->send_request($request);
 
     if ($response && isset($response['jwt'])) {
-        setcookie("userToken", $response['jwt'], time() + 3600, "/", "", false, true);
-        // setcookie("userToken", $response['jwt'], time() + 3600, "/", "", true, true); // Secure and HttpOnly 
+        //setcookie("userToken", $response['jwt'], time() + 3600, "/", "", false, true);
+        setcookie("userToken", $response['jwt'], time() + 3600, "/", "", true, true); // Secure and HttpOnly 
         header('Location: welcome.php');
         exit();
     } else {

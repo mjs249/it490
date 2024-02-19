@@ -10,14 +10,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($
     $password = trim($_POST['password']);
     $email = trim($_POST['email']);
 
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
     $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
 
     $request = [
         'type' => "register",
         'username' => $username,
-        'password' => $hashedPassword,
+        'password' => $password,
         'email' => $email
     ];
 

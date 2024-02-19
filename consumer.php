@@ -48,7 +48,7 @@ function doLogin($username, $password)
     }
 }
 
-function doRegister($username, $hashedPassword, $email)
+function doRegister($username, $password, $email)
 {
     $db_host = 'localhost';
     $db_user = 'test';
@@ -91,6 +91,7 @@ function doRegister($username, $hashedPassword, $email)
         return ['success' => false, 'message' => 'Error checking for duplicate username.'];
     }
 
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
     // Insert into DB
     $insertUser = $mysqli->prepare("INSERT INTO users (username, password, email) VALUES (?, ?, ?)");
     $insertUser->bind_param("sss", $username, $hashedPassword, $email);
