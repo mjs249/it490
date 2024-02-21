@@ -37,7 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <script src="passwordValidation.js"></script> <!-- Link to your JavaScript file for validation -->
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script defer src="passwordValidation.js"></script>
 </head>
 <body>
     <h2>Registration Form</h2>
@@ -45,13 +47,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($
     <form action="register.php" method="post" onsubmit="return validateForm()">
         Username: <input type="text" name="username" required><br>
         Email: <input type="email" name="email" required><br>
-        Password: <input type="password" name="password" id="password" required 
-                 pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
-                 title="Must contain at least one number, one uppercase and lowercase letter, and at least 8 or more characters"><br>
-        Confirm Password: <input type="password" name="confirm_password" id="confirm_password" required><br>
+
+        <div class="password-container">
+            Password: <input type="password" name="password" id="password" required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least one number, one uppercase and lowercase letter, and at least 8 or more characters">
+            <span id="togglePassword" class="toggle-password"><e class="fas fa-eye"></e></span>
+            <span id="capsLockWarning" class="tooltip">Caps Lock is ON!</span>
+        </div>
+        <br>
+        Confirm Password: <input type="password" name="confirm_password" id="confirm_password" required onkeyup="checkPasswordsMatch()"><br>
         <span id="message"></span><br>
         <input type="submit" value="Register">
     </form>
     <p>Already have an account? <a href="index.php">Log in here</a>.</p>
 </body>
 </html>
+
+
