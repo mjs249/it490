@@ -49,5 +49,3 @@ document.getElementById("confirm_password").addEventListener("input", checkPassw
 document.getElementById("togglePassword").addEventListener("click", togglePasswordVisibility);
 document.getElementById("password").addEventListener("keyup", showCapsLockWarning);
 document.getElementById("confirm_password").addEventListener("keyup", showCapsLockWarning);
-
-

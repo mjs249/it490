@@ -26,6 +26,17 @@ function showCapsLockWarning(e) {
     capsLockWarning.style.display = isCapsLockOn ? "block" : "none";
 }
 
+function validateLoginForm() {
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    
+    if (usernameInput.value.trim() === "" || passwordInput.value.trim() === "") {
+        alert("Both username and password are required.");
+        return false; 
+    }
+    
+    return true; 
+}
 document.addEventListener("DOMContentLoaded", function() {
     const passwordInput = document.getElementById("password");
     const toggleButton = document.getElementById("togglePassword");
@@ -39,11 +50,11 @@ document.addEventListener("DOMContentLoaded", function() {
     loginForm.addEventListener("submit", function(event) {
         if (!validateLoginForm()) {
             event.preventDefault(); 
-        }
+        }        
     });
 });
 
-document.getElementById('passwordInput').addEventListener('keyup', function(e) {
+document.getElementById('password').addEventListener('keyup', function(e) {
     var capsWarning = document.getElementById('capsLockWarning');
     var isCapsOn = e.getModifierState('CapsLock');
 

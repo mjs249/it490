@@ -1,12 +1,12 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+//error_reporting(E_ALL);
+//ini_set('display_errors', 1);
 
 require_once('./vendor/autoload.php');
 use \Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-$key = "";
+$key = "password";
 
 // Check if the JWT exists in the cookies
 if (!isset($_COOKIE['userToken'])) {
@@ -16,16 +16,17 @@ if (!isset($_COOKIE['userToken'])) {
 
 // Decode the JWT
 try {
+    JWT::$leeway = 60;
     $decoded = JWT::decode($_COOKIE['userToken'],  new Key($key, 'HS256'));
     // Extract the username from the decoded token
     $username = $decoded->username;
     $email = $decoded->email;
-    // Debug: Print out decoded token
-   // echo "Decoded token: ";
-  //  print_r($decoded);
+    //Debug: Print out decoded token
+    echo "Decoded token: ";
+    print_r($decoded);
 
-    // Debug: Print out username
-   // echo "Username: " . $username;
+    //Debug: Print out username
+    echo "Username: " . $username;
 } catch (Exception $e) {
     // If the token is invalid or expired, redirect to the login page
     echo "Error decoding token: " . $e->getMessage();
@@ -41,7 +42,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="home.css">
 </head>
 <body>
     <div class="navbar">
@@ -57,8 +58,3 @@ try {
     </form>
 </body>
 </html>
-
-
-
-
-

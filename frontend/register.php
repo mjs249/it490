@@ -53,13 +53,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($
             <span id="togglePassword" class="toggle-password"><e class="fas fa-eye"></e></span>
             <span id="capsLockWarning" class="tooltip">Caps Lock is ON!</span>
         </div>
-        <br>
-        Confirm Password: <input type="password" name="confirm_password" id="confirm_password" required onkeyup="checkPasswordsMatch()"><br>
-        <span id="message"></span><br>
-        <input type="submit" value="Register">
-    </form>
+        
+        Confirm Password:
+	    <div class="password-container"> 
+	    <input type="password" name="confirm_password" id="confirm_password" required onkeyup="checkPasswordsMatch()"><br>
+            </div>
+ 	     <span id="message"></span><br>
+            <input type="submit" value="Register">
     <p>Already have an account? <a href="index.php">Log in here</a>.</p>
+    </form>
 </body>
 </html>
-
-
