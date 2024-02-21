@@ -47,9 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($
     <form action="register.php" method="post" onsubmit="return validateForm()">
         Username: <input type="text" name="username" required><br>
         Email: <input type="email" name="email" required><br>
-
+	Password:
         <div class="password-container">
-            Password: <input type="password" name="password" id="password" required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least one number, one uppercase and lowercase letter, and at least 8 or more characters">
+            <input type="password" name="password" id="password" required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least one number, one uppercase and lowercase letter, and at least 8 or more characters">
             <span id="togglePassword" class="toggle-password"><e class="fas fa-eye"></e></span>
             <span id="capsLockWarning" class="tooltip">Caps Lock is ON!</span>
         </div>
