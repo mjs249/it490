@@ -48,9 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($
     <?php if (!empty($errorMessage)) { echo "<p style='color:red'>$errorMessage</p>"; } ?>
     <form action="index.php" method="post" onsubmit="return validateLoginForm()">
          Username: <input type="text" name="username" id="username" required><br>
-
+	Password:
     <div class="password-container">
-        Password: <input type="password" name="password" id="password" required>
+        <input type="password" name="password" id="password" required>
         <span id="togglePassword" class="toggle-password"><i class="fas fa-eye"></i></span>
         <span id="capsLockWarning" class="tooltip">Caps Lock is ON!</span>
     </div>
