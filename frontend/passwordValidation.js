@@ -32,6 +32,19 @@ function showCapsLockWarning(e) {
     capsLockWarning.style.display = e.getModifierState('CapsLock') ? 'block' : 'none';
 }
 
+function validateForm() {
+    var password = document.getElementById("password").value;
+    var confirmPassword = document.getElementById("confirm_password").value;
+
+    if (password !== confirmPassword) {
+        alert("Passwords do not match.");
+        return false;
+    }
+
+    return true; 
+}
+
+
 document.getElementById("confirm_password").addEventListener("input", checkPasswordsMatch);
 document.getElementById("togglePassword").addEventListener("click", togglePasswordVisibility);
 document.getElementById("password").addEventListener("keyup", showCapsLockWarning);
