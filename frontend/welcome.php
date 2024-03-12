@@ -48,6 +48,10 @@ try {
     <div class="navbar">
         <a href="welcome.php">Home</a>
         <a href="userProfile.php">Profile</a>
+        <a href="testing.php">Search</a>
+        <a href="radiusSearch.php">Search by Location</a>
+        <a href="booking.php">Reservations</a>
+        <a href="review.php">Leave a Review</a>
     </div>
 
 <body>

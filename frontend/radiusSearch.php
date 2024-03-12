@@ -30,21 +30,25 @@ try {
 
 $results = []; // Initialize results array
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['location'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['location'], $_POST['radius'])) {
+    // Create a new instance of rabbitMQClient
     $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
 
+    $term = trim($_POST['term']);
+    $location = trim($_POST['location']);
+    $radiusInMiles = trim($_POST['radius']); // Retrieve the radius from POST data
+    $radiusInMeters =floor( $radiusInMiles * 1609.34); // Convert miles to meters
+
+    // Prepare the request payload
     $request = [
-        'type' => "yelpSearch",
-        'term' => trim($_POST['term']),
-        'location' => trim($_POST['location']),
+        'type' => "yelpradSearch",
+        'term' => $term,
+        'location' => $location,
+        'radius' => $radiusInMeters, // Include the radius in the request
     ];
 
+    // Send the request and get the response
     $response = $client->send_request($request);
-
-    // Debug: Print the entire response for inspection
-//    echo "<pre>Response received: ";
-//    print_r($response);
-//    echo "</pre>";
 
     if (!empty($response) && isset($response['businesses'])) {
         $results = $response['businesses'];
@@ -76,13 +80,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['locati
         <a href="review.php">Leave a Review</a>
     </div>
 
-
-    <h1>Restaurant Search</h1>
-    <form action="testing.php" method="post">
+    <h1>Restaurant Search by Radius</h1>
+    <form action="radiusSearch.php" method="post">
         <label for="term">Search Term:</label>
         <input type="text" id="term" name="term" required><br>
         <label for="location">Location:</label>
         <input type="text" id="location" name="location" required>
+<label for="radius">Radius (miles):</label>
+<input type="range" id="radius" name="radius" min="0" max="25" oninput="this.nextElementSibling.value = this.value">
+<output>12.5</output><br>
+<script>
+document.getElementById('radius').oninput = function() {
+    this.nextElementSibling.value = this.value;
+};
+</script>
         <br>
         <button type="submit">Search</button>
     </form>

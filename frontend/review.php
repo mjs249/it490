@@ -1,25 +1,18 @@
 <?php
-
 session_start();
-
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
-
 require_once('/home/mike/it490/path.inc');
 require_once('/home/mike/it490/get_host_info.inc');
 require_once('/home/mike/it490/rabbitMQLib.inc');
-
 require_once('./vendor/autoload.php');
 use \Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 $key = "password";
-$API_KEY = '';
-$API_HOST = "https://api.yelp.com";
-$SEARCH_PATH = "/v3/businesses/search";
 
 if (!isset($_COOKIE['userToken'])) {
-    header("Location: index.php"); 
+    header("Location: index.php");
     exit;
 }
 
@@ -32,16 +25,17 @@ try {
     exit;
 }
 
-$results = [];
 $message = "";
+$results = [];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
+
     if (isset($_POST['submitReview'])) {
         $restaurantId = $_POST['restaurantId'];
         $rating = $_POST['rating'];
         $review = $_POST['review'];
 
-        // Construct the request array for review submission
         $request = [
             'type' => "submitReview",
             'restaurantId' => $restaurantId,
@@ -50,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'username' => $username,
         ];
 
-        $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
         $response = $client->send_request($request);
 
         if ($response && isset($response['success']) && $response['success']) {
@@ -59,37 +52,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = "Failed to submit review.";
         }
     } else {
-        // Search Yelp for restaurants
-        $term = isset($_POST['term']) ? $_POST['term'] : '';
-        $location = isset($_POST['location']) ? $_POST['location'] : '';
+        $term = $_POST['term'] ?? '';
+        $location = $_POST['location'] ?? '';
 
-        $response = json_decode(search_yelp($term, $location, $API_KEY, $API_HOST, $SEARCH_PATH), true);
-        $results = $response['businesses'] ?? [];
+        $request = [
+            'type' => 'yelpSearch',
+            'term' => $term,
+            'location' => $location,
+        ];
+
+        $response = $client->send_request($request);
+
+        if (isset($response['businesses'])) {
+            $results = $response['businesses'];
+        } else {
+            $message = "Failed to search Yelp. " . ($response['message'] ?? '');
+        }
     }
-}
-
-function request_yelp($url, $api_key) {
-    $curl = curl_init($url);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_HTTPHEADER, ["Authorization: Bearer $api_key"]);
-
-    $response = curl_exec($curl);
-    if (!$response) {
-        die("Connection Failure.n");
-    }
-    curl_close($curl);
-    return $response;
-}
-
-function search_yelp($term, $location, $api_key, $api_host, $search_path) {
-    $url_params = http_build_query([
-        'term' => $term,
-        'location' => $location,
-        'limit' => 5
-    ]);
-
-    $search_url = "$api_host$search_path?$url_params";
-    return request_yelp($search_url, $api_key);
 }
 ?>
 
@@ -106,9 +85,12 @@ function search_yelp($term, $location, $api_key, $api_host, $search_path) {
         <a href="welcome.php">Home</a>
         <a href="userProfile.php">Profile</a>
         <a href="testing.php">Search</a>
+        <a href="radiusSearch.php">Search by Location</a>
+        <a href="booking.php">Reservations</a>
+        <a href="review.php">Leave a Review</a>
     </div>
 
-    <h1>Restaurant Search</h1>
+    <h1>Leave a Review</h1>
     <form action="review.php" method="post">
         <label for="term">Search Term:</label>
         <input type="text" id="term" name="term" required><br>
