@@ -33,7 +33,7 @@ function performYelpSearch($requestData) {
     $url_params = http_build_query([
         'term' => $term,
         'location' => $location,
-        'radius' => $radius, // Include radius in the query if provided
+        'radius' => $radius,
         'limit' => 5,
     ]);
 
