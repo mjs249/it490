@@ -1,18 +1,268 @@
 #!/usr/bin/php
 <?php
+ini_set('log_errors', 1);
+ini_set('error_log', '/home/mike/error.log');
 require_once './vendor/autoload.php';
+require_once 'config.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use \Firebase\JWT\JWT;
 
+function updateReminderStatus($reservationId, $reminderSent) {
+    
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    if ($mysqli->connect_error) {
+        throw new Exception('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+    }
+
+    $stmt = $mysqli->prepare("UPDATE reservations SET reminder_sent = TRUE WHERE reservation_id = ?");
+    $stmt->bind_param("i", $reservationId);
+
+    if (!$stmt->execute()) {
+        throw new Exception("Update failed: " . $stmt->error);
+    }
+    $stmt->close();
+}
+function fetchReservationsNeedingReminders() {
+
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+    if ($mysqli->connect_error) {
+        throw new Exception('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+    }
+
+    $stmt = $mysqli->prepare("SELECT 
+                            r.reservation_id,
+                            r.username,
+                            r.restaurant_id,
+                            r.reservation_date,
+                            r.reservation_time,
+                            r.number_of_guests,
+                            r.special_requests,
+                            r.confirmation_code,
+                            u.email,
+                            rest.name AS restaurant_name,
+                            CONCAT(rest.address1, ', ', rest.city, ', ', rest.state, ' ', rest.zip_code, ', ', rest.country) AS restaurant_address
+                          FROM reservations r
+                          INNER JOIN users u ON r.username = u.username
+                          INNER JOIN restaurants rest ON r.restaurant_id = rest.id
+                          WHERE r.reservation_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                            AND r.reminder_sent = FALSE");
+
+$stmt->execute();
+$result = $stmt->get_result();
+
+    $reservations = [];
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $reservations[] = $row;
+        }
+        $result->free();
+    } else {
+        throw new Exception("Database query failed: " . $mysqli->error);
+    }
+
+    return $reservations;
+}
+
+function fetchRandomSearchQuery($username) {
+
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    $stmt = $mysqli->prepare("SELECT term, location FROM search_history WHERE username = ? ORDER BY RAND() LIMIT 1");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        return ['success' => true, 'query' => ['term' => $row['term'], 'location' => $row['location']]];
+    } else {
+        return ['success' => false, 'message' => "No search history found for user: $username"];
+    }
+}
+
+function logSearchQuery($username, $term, $location, $radius) {
+
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    $stmt = $mysqli->prepare("INSERT INTO search_history (username, term, location, radius) VALUES (?, ?, ?, ?)");
+    if (!$stmt) {
+        return ['success' => false, 'message' => "Prepare failed: " . $mysqli->error];
+    }
+
+    $stmt->bind_param("sssi", $username, $term, $location, $radius);
+    if ($stmt->execute()) {
+        return ['success' => true, 'message' => "Search query logged successfully"];
+    } else {
+        return ['success' => false, 'message' => "Execute failed: " . $stmt->error];
+    }
+}
+
+function storeRestaurants($restaurants) {
+
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    if ($mysqli->connect_error) {
+        return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
+    }
+
+    $baseSql = "INSERT INTO restaurants (id, alias, name, image_url, is_closed, url, review_count, categories, rating, latitude, longitude, transactions, price, address1, address2, address3, city, zip_code, country, state, display_address, phone, display_phone, distance) VALUES ";
+    $valueList = [];
+    $params = [];
+    $types = '';
+
+    $placeHolder = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    foreach ($restaurants as $restaurant) {
+        $valueList[] = $placeHolder;
+        $price = isset($restaurant['price']) && !empty($restaurant['price']) ? $restaurant['price'] : 0;
+        array_push($params, $restaurant['id'], $restaurant['alias'], $restaurant['name'], $restaurant['image_url'], $restaurant['is_closed'] ? 1 : 0,
+                   $restaurant['url'], $restaurant['review_count'], json_encode($restaurant['categories']), $restaurant['rating'],
+                   $restaurant['coordinates']['latitude'], $restaurant['coordinates']['longitude'], json_encode($restaurant['transactions']),
+                   $restaurant['price'], $restaurant['location']['address1'], $restaurant['location']['address2'], $restaurant['location']['address3'],
+                   $restaurant['location']['city'], $restaurant['location']['zip_code'], $restaurant['location']['country'], $restaurant['location']['state'],
+                   json_encode($restaurant['location']['display_address']), $restaurant['phone'], $restaurant['display_phone'], $restaurant['distance']);
+        $types .= 'sssssbisiiddsssssssssssd';
+    }
+
+    $sql = $baseSql . implode(', ', $valueList) . " ON DUPLICATE KEY UPDATE name = VALUES(name), image_url = VALUES(image_url), is_closed = VALUES(is_closed), url = VALUES(url), review_count = VALUES(review_count), categories = VALUES(categories), rating = VALUES(rating), latitude = VALUES(latitude), longitude = VALUES(longitude), transactions = VALUES(transactions), price = VALUES(price), address1 = VALUES(address1), address2 = VALUES(address2), address3 = VALUES(address3), city = VALUES(city), zip_code = VALUES(zip_code), country = VALUES(country), state = VALUES(state), display_address = VALUES(display_address), phone = VALUES(phone), display_phone = VALUES(display_phone), distance = VALUES(distance);";
+
+    $stmt = $mysqli->prepare($sql);
+
+    $stmt->bind_param($types, ...$params);
+
+    if (!$stmt->execute()) {
+        $mysqli->close();
+        return ['success' => false, 'message' => "Insertion failed: " . $stmt->error];
+    }
+
+    $stmt->close();
+    $mysqli->close();
+    return ['success' => true, 'message' => 'Restaurants stored successfully.'];
+}
+
+
+function makeReservation($username, $restaurantId, $date, $time, $guests, $specialRequests) {
+
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    if ($mysqli->connect_error) {
+        return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
+    }
+
+    $sql = "INSERT INTO reservations (username, restaurant_id, reservation_date, reservation_time, number_of_guests, special_requests, confirmation_code) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        $mysqli->close();
+        return ['success' => false, 'message' => "Prepare failed: " . $mysqli->error];
+    }
+
+    $confirmationCode = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 10));
+
+    $guestsInt = (int) $guests;
+
+    if (!$stmt->bind_param("ssssiss", $username, $restaurantId, $date, $time, $guestsInt, $specialRequests, $confirmationCode)) {
+        $stmtError = $stmt->error;
+        $stmt->close();
+        $mysqli->close();
+        return ['success' => false, 'message' => "Binding parameters failed: " . $stmtError];
+    }
+
+    if (!$stmt->execute()) {
+        $stmtError = $stmt->error;
+        $stmt->close();
+        $mysqli->close();
+        return ['success' => false, 'message' => "Execute failed: " . $stmtError];
+    }
+
+    $stmt->close();
+    $mysqli->close();
+
+    return ['success' => true, 'message' => 'Reservation made successfully.', 'confirmation_code' => $confirmationCode];
+}
+
+function retrieveReviews($restaurantId = null) {
+
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    if ($mysqli->connect_error) {
+        return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
+    }
+
+    if ($restaurantId !== null) {
+    $sql = "SELECT reviews.id, reviews.restaurant_id, reviews.username, reviews.review, reviews.rating AS userRating, 
+            restaurants.name, restaurants.image_url, restaurants.is_closed, 
+            restaurants.url, restaurants.review_count, restaurants.categories, restaurants.rating AS yelpRating, 
+            restaurants.latitude, restaurants.longitude, restaurants.phone, restaurants.display_phone, 
+            restaurants.distance, restaurants.address2, restaurants.address3, restaurants.alias, 
+            restaurants.transactions, restaurants.price, restaurants.city, restaurants.zip_code, 
+            restaurants.country, restaurants.state, restaurants.display_address, restaurants.address1 
+            FROM reviews 
+            INNER JOIN restaurants ON reviews.restaurant_id = restaurants.id 
+            WHERE restaurants.id = ?";
+} else {
+    $sql = "SELECT reviews.id, reviews.restaurant_id, reviews.username, reviews.review, reviews.rating AS userRating, 
+            restaurants.name, restaurants.image_url, restaurants.is_closed, 
+            restaurants.url, restaurants.review_count, restaurants.categories, restaurants.rating AS yelpRating, 
+            restaurants.latitude, restaurants.longitude, restaurants.phone, restaurants.display_phone, 
+            restaurants.distance, restaurants.address2, restaurants.address3, restaurants.alias, 
+            restaurants.transactions, restaurants.price, restaurants.city, restaurants.zip_code, 
+            restaurants.country, restaurants.state, restaurants.display_address, restaurants.address1 
+            FROM reviews 
+            INNER JOIN restaurants ON reviews.restaurant_id = restaurants.id";
+}
+
+    if ($stmt = $mysqli->prepare($sql)) {
+
+        if ($restaurantId !== null) {
+            $stmt->bind_param("s", $restaurantId);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $reviews = [];
+        while ($row = $result->fetch_assoc()) {
+            $reviews[] = $row;
+        }
+
+        $stmt->close();
+        $mysqli->close();
+        return ['success' => true, 'reviews' => $reviews];
+    } else {
+        $mysqli->close();
+        return ['success' => false, 'message' => "Prepare failed: " . $mysqli->error];
+    }
+}
+
+function submitReview($username, $restaurantId, $rating, $review){
+    try{
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+    if ($mysqli->connect_error) {
+        die("Connection failed: " . $mysqli->connect_error);
+    }
+
+    $stmt = $mysqli->prepare("INSERT INTO reviews (username, restaurant_id, rating, review) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssis", $username, $restaurantId, $rating, $review);
+
+    if ($stmt->execute()) {
+        $mysqli->close();
+        return ['success' => true, 'message' => 'Review submitted successfully.'];
+    } else {
+        $mysqli->close();
+        return ['success' => false, 'message' => 'Failed to submit review.'];
+    }
+  } catch (Exception $e) {
+        error_log("Error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Login Failed due to an unexpected error.'];
+    }
+}
+
 function doLogin($username, $password)
 {
-    $db_host = 'localhost';
-    $db_user = 'test';
-    $db_pass = ''; 
-    $db_name = 'it490';
-
-    $mysqli = new mysqli($db_host, $db_user, $db_pass, $db_name);
+    try{
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     if ($mysqli->connect_error) {
         die("Connection failed: " . $mysqli->connect_error);
     }
@@ -30,10 +280,10 @@ function doLogin($username, $password)
     $row = $result->fetch_assoc();
     if (password_verify($password, $row['password'])) {
         $key = "password";
-        $payload = [
+	$payload = [
             "iss" => "localhost",
             "aud" => "localhost",
-            "iat" => time(),
+            "iat" => time() - 15,
             "exp" => time() + 3600,
             "username" => $username,
             "email" => $row['email']
@@ -46,16 +296,16 @@ function doLogin($username, $password)
         $mysqli->close();
         return ['success' => false, 'message' => 'Login Failed! Incorrect password.'];
     }
+  } catch (Exception $e) {
+        error_log("Login error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Login Failed due to an unexpected error.'];
+    }
 }
 
 function doRegister($username, $password, $email)
 {
-    $db_host = 'localhost';
-    $db_user = 'test';
-    $db_pass = '';
-    $db_name = 'it490';
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
-    $mysqli = new mysqli($db_host, $db_user, $db_pass, $db_name);
     if ($mysqli->connect_error) {
         return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
     }
@@ -74,7 +324,6 @@ function doRegister($username, $password, $email)
         }
     }
 
-    // Check for existing username
     if ($stmt = $mysqli->prepare("SELECT COUNT(*) FROM users WHERE username = ?")) {
         $stmt->bind_param("s", $username);
         $stmt->execute();
@@ -90,9 +339,8 @@ function doRegister($username, $password, $email)
         $mysqli->close();
         return ['success' => false, 'message' => 'Error checking for duplicate username.'];
     }
-
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    // Insert into DB
+
     $insertUser = $mysqli->prepare("INSERT INTO users (username, password, email) VALUES (?, ?, ?)");
     $insertUser->bind_param("sss", $username, $hashedPassword, $email);
 
@@ -111,11 +359,11 @@ $channel = $connection->channel();
 
 $channel->queue_declare('db_queue', false, true, false, false);
 
-echo ' [*] Waiting for messages. To exit press CTRL+C', "\n";
+echo ' [*] Waiting for messages.', "\n";
 
 $callback = function ($msg) use ($channel) {
-    echo " [x] Received ", $msg->body, "\n";
     $request = json_decode($msg->body, true);
+    echo "[x] Received type: ", $request['type'], "\n";
     $response = null;
 
     try {
@@ -125,6 +373,61 @@ $callback = function ($msg) use ($channel) {
                 break;
             case "register":
                 $response = doRegister($request['username'], $request['password'], $request['email']);
+                break;
+            case "submitReview":
+                $response = submitReview($request['username'], $request['restaurantId'], $request['rating'], $request['review']);
+                break;
+            case "retrieveReviews":
+                $response = retrieveReviews();
+                break;
+            case "makeReservation":
+                if (isset($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['specialRequests'])) {
+                    $response = makeReservation($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['specialRequests'] ?? '');
+                } else {
+                    $response = ['success' => false, 'message' => 'Missing reservation details.'];
+                }
+                break;
+            case "storeRestaurants":
+                if (isset($request['restaurants'])) {
+                    $response = storeRestaurants($request['restaurants']);
+                } else {
+                    $response = ['success' => false, 'message' => 'No restaurant data provided.'];
+                }
+                break;
+            case "updateReminderSent":
+                if (isset($request['reservation_id']) && isset($request['reminder_sent'])) {
+                    try {
+                        updateReminderStatus($request['reservation_id'], $request['reminder_sent']);
+                        $response = ['success' => true, 'message' => 'Reminder status updated successfully.'];
+                    } catch (Exception $e) {
+                        $response = ['success' => false, 'message' => "Failed to update reminder status: " . $e->getMessage()];
+                    }
+                } else {
+                    $response = ['success' => false, 'message' => 'Missing reservation ID or reminder status.'];
+                }
+                break;
+            case "logSearchQuery":
+                if (isset($request['username'], $request['term'], $request['location'])) {
+                    $radius = $request['radius'] ?? 0;
+                    $response = logSearchQuery($request['username'], $request['term'], $request['location'], $radius);
+                } else {
+                    $response = ['success' => false, 'message' => 'Missing required fields for logging search query.'];
+                }
+                break;
+            case "fetchRandomSearchQuery":
+                if (isset($request['username'])) {
+                    $response = fetchRandomSearchQuery($request['username']);
+                } else {
+                    $response = ['success' => false, 'message' => 'Username not provided.'];
+                }
+                break;
+            case "fetchReservationReminders":
+                try {
+                    $reservations = fetchReservationsNeedingReminders();
+                    $response = ['success' => true, 'reservations' => $reservations];
+                } catch (Exception $e) {
+                    $response = ['success' => false, 'message' => "Failed to fetch reservations: " . $e->getMessage()];
+                }
                 break;
             default:
                 $response = ['success' => false, 'message' => "Request type not handled"];
@@ -136,11 +439,11 @@ $callback = function ($msg) use ($channel) {
 
     $responseMsg = new AMQPMessage(
         json_encode($response),
-        array('correlation_id' => $msg->get('correlation_id'))
+        ['correlation_id' => $msg->get('correlation_id')]
     );
 
     $channel->basic_publish($responseMsg, '', $msg->get('reply_to'));
-    echo " [x] Response sent\n";
+    echo "[x] Response sent\n";
 };
 
 $channel->basic_qos(null, 1, null);
@@ -156,6 +459,4 @@ try {
     $connection->close();
 }
 
-$channel->close();
-$connection->close();
-
+?>

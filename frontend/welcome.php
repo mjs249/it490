@@ -45,14 +45,11 @@ try {
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
-    <div class="navbar">
-        <a href="welcome.php">Home</a>
-        <a href="userProfile.php">Profile</a>
-    </div>
+    <?php include 'navbar.php'; ?>
 
 <body>
     <h1>Welcome, <?php echo htmlspecialchars($username); ?>!</h1>
-    <p>Glad you're here. You've successfully logged in.</p>
+    <p>Glad you're here. You've successfully logged in. Begin your search for great food near you. Be sure to leave a few reviews along the way!</p>
     <form action="logout.php" method="post">
         <button type="submit">Logout</button>
     </form>

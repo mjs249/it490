@@ -40,10 +40,7 @@ try {
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
-    <div class="navbar">
-        <a href="welcome.php">Home</a>
-        <a href="userProfile.php">Profile</a>
-    </div>
+    <?php include 'navbar.php'; ?>
 
     <h1>User Profile</h1>
     <p>Username: <?php echo htmlspecialchars($username); ?></p>

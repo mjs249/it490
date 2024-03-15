@@ -3,6 +3,7 @@ body {
     padding: 0;
     font-family: 'Arial', sans-serif;
     background-color: #f8f8f8;
+    text-align: center; 
 }
 
 h1 {
@@ -47,4 +48,76 @@ p a:hover {
 
 .navbar a:hover {
     background-color: #555;
+}
+
+.review {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.review img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+.review h3, .review p {
+    text-align: center;
+}
+
+.review + .review {
+    margin-top: 40px;
+}
+.dietary-preferences {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 10px;
+    justify-content: start;
+    margin-bottom: 20px;
+}
+
+form label {
+    display: block;
+    margin-bottom: 5px;
+}
+input[type="text"],
+input[type="checkbox"] + label {
+    margin-bottom: 15px;
+}
+.dietary-review {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dietary-review img {
+    display: block;
+    max-width: 200px;
+    height: auto;
+    margin: 20px auto;
+}
+
+.dietary-review h3, .dietary-review p {
+    text-align: center;
+}
+#recommendation {
+    margin: 0 auto;
+    width: 80%;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#recommendation img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 20px;
 }
