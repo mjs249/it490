@@ -1,11 +1,29 @@
 #!/usr/bin/php
 <?php
+ini_set('log_errors', 1);
+ini_set('error_log', '/home/mike/error.log');
 require_once './vendor/autoload.php';
 require_once 'config.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use \Firebase\JWT\JWT;
 
+function updateReminderStatus($reservationId, $reminderSent) {
+    
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    if ($mysqli->connect_error) {
+        throw new Exception('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+    }
+
+    $stmt = $mysqli->prepare("UPDATE reservations SET reminder_sent = TRUE WHERE reservation_id = ?");
+    $stmt->bind_param("i", $reservationId);
+
+    if (!$stmt->execute()) {
+        throw new Exception("Update failed: " . $stmt->error);
+    }
+    $stmt->close();
+}
 function fetchReservationsNeedingReminders() {
 
     $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -24,7 +42,7 @@ function fetchReservationsNeedingReminders() {
                             r.confirmation_code,
                             u.email,
                             rest.name AS restaurant_name,
-                            rest.address1 AS restaurant_address
+                            CONCAT(rest.address1, ', ', rest.city, ', ', rest.state, ' ', rest.zip_code, ', ', rest.country) AS restaurant_address
                           FROM reservations r
                           INNER JOIN users u ON r.username = u.username
                           INNER JOIN restaurants rest ON r.restaurant_id = rest.id
@@ -344,8 +362,8 @@ $channel->queue_declare('db_queue', false, true, false, false);
 echo ' [*] Waiting for messages.', "\n";
 
 $callback = function ($msg) use ($channel) {
-    echo " [x] Received ", $msg->body, "\n";
     $request = json_decode($msg->body, true);
+    echo "[x] Received type: ", $request['type'], "\n";
     $response = null;
 
     try {
@@ -376,6 +394,18 @@ $callback = function ($msg) use ($channel) {
                     $response = ['success' => false, 'message' => 'No restaurant data provided.'];
                 }
                 break;
+            case "updateReminderSent":
+                if (isset($request['reservation_id']) && isset($request['reminder_sent'])) {
+                    try {
+                        updateReminderStatus($request['reservation_id'], $request['reminder_sent']);
+                        $response = ['success' => true, 'message' => 'Reminder status updated successfully.'];
+                    } catch (Exception $e) {
+                        $response = ['success' => false, 'message' => "Failed to update reminder status: " . $e->getMessage()];
+                    }
+                } else {
+                    $response = ['success' => false, 'message' => 'Missing reservation ID or reminder status.'];
+                }
+                break;
             case "logSearchQuery":
                 if (isset($request['username'], $request['term'], $request['location'])) {
                     $radius = $request['radius'] ?? 0;
@@ -391,18 +421,12 @@ $callback = function ($msg) use ($channel) {
                     $response = ['success' => false, 'message' => 'Username not provided.'];
                 }
                 break;
-            case "fetchReservationsForReminders":
+            case "fetchReservationReminders":
                 try {
                     $reservations = fetchReservationsNeedingReminders();
-                    $response = [
-                        'success' => true,
-                        'reservations' => $reservations
-                    ];
+                    $response = ['success' => true, 'reservations' => $reservations];
                 } catch (Exception $e) {
-                    $response = [
-                        'success' => false,
-                        'message' => "Failed to fetch reservations: " . $e->getMessage()
-                    ];
+                    $response = ['success' => false, 'message' => "Failed to fetch reservations: " . $e->getMessage()];
                 }
                 break;
             default:
@@ -415,11 +439,11 @@ $callback = function ($msg) use ($channel) {
 
     $responseMsg = new AMQPMessage(
         json_encode($response),
-        array('correlation_id' => $msg->get('correlation_id'))
+        ['correlation_id' => $msg->get('correlation_id')]
     );
 
     $channel->basic_publish($responseMsg, '', $msg->get('reply_to'));
-    echo " [x] Response sent\n";
+    echo "[x] Response sent\n";
 };
 
 $channel->basic_qos(null, 1, null);
