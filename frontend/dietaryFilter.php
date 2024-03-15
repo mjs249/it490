@@ -1,5 +1,4 @@
 <?php
-
 session_start();
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
@@ -33,19 +32,19 @@ $results = []; // Initialize results array
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['location'])) {
     $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
 
+    $term = trim($_POST['term']);
+    $location = trim($_POST['location']);
+    $dietaryFilters = isset($_POST['dietary']) ? implode(" ", $_POST['dietary']) : '';
+    $fullTerm = $term . ' ' . $dietaryFilters;
+
     $request = [
         'type' => "yelpSearch",
         'username' => $username,
-        'term' => trim($_POST['term']),
-        'location' => trim($_POST['location']),
+        'term' => $fullTerm,
+        'location' => $location,
     ];
 
     $response = $client->send_request($request);
-
-    // Debug: Print the entire response for inspection
-//    echo "<pre>Response received: ";
-//    print_r($response);
-//    echo "</pre>";
 
     if (!empty($response) && isset($response['businesses'])) {
         $results = $response['businesses'];
@@ -56,7 +55,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['locati
         }
     }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -64,37 +62,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['locati
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
+    <title>Dietary Filters</title>
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
     <?php include 'navbar.php'; ?>
 
-
-    <h1>Restaurant Search</h1>
-    <form action="testing.php" method="post">
+    <h1>Restaurant Search with Dietary Filters</h1>
+    <form action="dietaryFilter.php" method="post">
         <label for="term">Search Term:</label>
         <input type="text" id="term" name="term" required><br>
+
         <label for="location">Location:</label>
-        <input type="text" id="location" name="location" required>
-        <br>
+        <input type="text" id="location" name="location" required><br>
+
+        <div class="dietary-review">
+            <label><input type="checkbox" name="dietary[]" value="Vegan"> Vegan</label>
+            <label><input type="checkbox" name="dietary[]" value="Nut-Free"> Nut-Free</label>
+            <label><input type="checkbox" name="dietary[]" value="Gluten-Free"> Gluten-Free</label>
+            <label><input type="checkbox" name="dietary[]" value="Halal"> Halal</label>
+            <label><input type="checkbox" name="dietary[]" value="Kosher"> Kosher</label>
+        </div>
         <button type="submit">Search</button>
     </form>
 
     <div id="results">
         <h2>Results:</h2>
-        <?php foreach ($results as $business): ?>
-            <div class="result">
-                <p>Name: <?php echo htmlspecialchars($business['name']); ?></p>
-                <p>Rating: <?php echo htmlspecialchars($business['rating']); ?></p>
-		<img src="<?php echo htmlspecialchars($business['image_url']); ?>" alt="Restaurant Image" style="width:100%;max-width:300px;">
-                <p>Address: <?php echo htmlspecialchars(implode(", ", $business['location']['display_address'])); ?></p>
-            </div>
-        <?php endforeach; ?>
+        <?php if (!empty($results)): ?>
+            <?php foreach ($results as $business): ?>
+                <div class="dietary-review">
+                    <p>Name: <?php echo htmlspecialchars($business['name']); ?></p>
+                    <p>Rating: <?php echo htmlspecialchars($business['rating']); ?></p>
+                    <p>Address: <?php echo htmlspecialchars(implode(", ", $business['location']['display_address'])); ?></p>
+                    <img src="<?php echo htmlspecialchars($business['image_url']); ?>" alt="Restaurant Image">
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p></p>
+        <?php endif; ?>
     </div>
 
     <form action="logout.php" method="post">
         <button type="submit">Logout</button>
-    </form>
 </body>
 </html>

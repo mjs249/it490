@@ -28,35 +28,50 @@ try {
 $message = "";
 $results = [];
 
+if (isset($_SESSION['last_search'])) {
+    $term = $_SESSION['last_search']['term'];
+    $location = $_SESSION['last_search']['location'];
+} else {
+    $term = '';
+    $location = '';
+}
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
     $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
 
     if (isset($_POST['submitReview'])) {
+
         $restaurantId = $_POST['restaurantId'];
         $rating = $_POST['rating'];
         $review = $_POST['review'];
 
         $request = [
+
             'type' => "submitReview",
             'restaurantId' => $restaurantId,
             'rating' => $rating,
             'review' => $review,
             'username' => $username,
+
         ];
 
         $response = $client->send_request($request);
 
         if ($response && isset($response['success']) && $response['success']) {
+
             $message = "Review submitted successfully!";
+
         } else {
+
             $message = "Failed to submit review.";
         }
     } else {
+
         $term = $_POST['term'] ?? '';
         $location = $_POST['location'] ?? '';
-
         $request = [
             'type' => 'yelpSearch',
+            'username' => $username,
             'term' => $term,
             'location' => $location,
         ];
@@ -64,12 +79,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $response = $client->send_request($request);
 
         if (isset($response['businesses'])) {
+
             $results = $response['businesses'];
+
         } else {
+
             $message = "Failed to search Yelp. " . ($response['message'] ?? '');
         }
     }
 }
+
+
 ?>
 
 <!DOCTYPE html>
@@ -81,21 +101,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
-    <div class="navbar">
-        <a href="welcome.php">Home</a>
-        <a href="userProfile.php">Profile</a>
-        <a href="testing.php">Search</a>
-        <a href="radiusSearch.php">Search by Location</a>
-        <a href="booking.php">Reservations</a>
-        <a href="review.php">Leave a Review</a>
-    </div>
+    <?php include 'navbar.php'; ?>
 
     <h1>Leave a Review</h1>
     <form action="review.php" method="post">
         <label for="term">Search Term:</label>
-        <input type="text" id="term" name="term" required><br>
+        <input type="text" id="term" name="term" value="<?php echo htmlspecialchars($term); ?>" required><br>
         <label for="location">Location:</label>
-        <input type="text" id="location" name="location" required><br>
+        <input type="text" id="location" name="location" value="<?php echo htmlspecialchars($location); ?>" required><br>
         <button type="submit">Search</button>
     </form>
 

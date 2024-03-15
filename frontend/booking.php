@@ -31,10 +31,11 @@ try {
 $results = []; // Initialize results array
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['location'])) {
-    // Create a new instance of rabbitMQClient
+
     $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
     $request = [
         'type' => "yelpSearch",
+        'username' => $username,
         'term' => trim($_POST['term']),
         'location' => trim($_POST['location']),
     ];
@@ -70,9 +71,10 @@ if (isset($_POST['makeReservation'])) {
     $reservationResponse = $client->send_request($reservationRequest);
 
     if ($reservationResponse && $reservationResponse['success']) {
-        echo "Reservation successful!";
+        echo "Reservation successful! Confirmation Code: " . $reservationResponse['confirmation_code'];
+
     } else {
-        echo "Failed to make a reservation.";
+        echo $reservationResponse['message'];
     }
 }
 
@@ -86,14 +88,7 @@ if (isset($_POST['makeReservation'])) {
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
-    <div class="navbar">
-        <a href="welcome.php">Home</a>
-        <a href="userProfile.php">Profile</a>
-        <a href="testing.php">Search</a>
-        <a href="radiusSearch.php">Search by Location</a>
-        <a href="booking.php">Reservations</a>
-        <a href="review.php">Leave a Review</a>
-    </div>
+    <?php include 'navbar.php'; ?>
 
     <h1>Book a Reservation</h1>
     <form action="booking.php" method="post">
@@ -121,14 +116,25 @@ if (isset($_POST['makeReservation'])) {
                         <input type="time" id="reservationTime" name="reservationTime" required>
                         <label for="guests">Guests:</label>
                         <input type="number" id="guests" name="guests" min="1" required>
+			<label for="specialRequests">Special Requests:</label>
+			<textarea id="specialRequests" name="specialRequests"></textarea>
+
                         <button type="submit" name="makeReservation">Make Reservation</button>
-<label for="specialRequests">Special Requests:</label>
-<textarea id="specialRequests" name="specialRequests"></textarea>
                     </form>
                 </div>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
+
+	        <div id="confirmation">
+        		<?php if (isset($reservationResponse) && $reservationResponse['success']): ?>
+            		<p>Reservation successful!</p>
+            		<p>Your reservation is confirmed for <?php echo $reservationDate; ?> at <?php echo $reservationTime; ?>.</p>
+            		<p>Number of guests: <?php echo $guests; ?></p>
+ 			<p>Special requests: <?php echo $specialRequests; ?></p>
+            		<p>Please save this confirmation code for your records: <?php echo $reservationResponse['confirmation_code']; ?></p>
+        		<?php endif; ?>
+    		</div>
 
     <form action="logout.php" method="post">
         <button type="submit">Logout</button>

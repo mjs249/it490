@@ -42,6 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['locati
     // Prepare the request payload
     $request = [
         'type' => "yelpradSearch",
+        'username' => $username,
         'term' => $term,
         'location' => $location,
         'radius' => $radiusInMeters, // Include the radius in the request
@@ -71,30 +72,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['locati
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
-    <div class="navbar">
-        <a href="welcome.php">Home</a>
-        <a href="userProfile.php">Profile</a>
-        <a href="testing.php">Search</a>
-        <a href="radiusSearch.php">Search by Location</a>
-        <a href="booking.php">Reservations</a>
-        <a href="review.php">Leave a Review</a>
-    </div>
+    <?php include 'navbar.php'; ?>
 
     <h1>Restaurant Search by Radius</h1>
     <form action="radiusSearch.php" method="post">
         <label for="term">Search Term:</label>
         <input type="text" id="term" name="term" required><br>
         <label for="location">Location:</label>
-        <input type="text" id="location" name="location" required>
-<label for="radius">Radius (miles):</label>
-<input type="range" id="radius" name="radius" min="0" max="25" oninput="this.nextElementSibling.value = this.value">
-<output>12.5</output><br>
-<script>
-document.getElementById('radius').oninput = function() {
-    this.nextElementSibling.value = this.value;
-};
-</script>
-        <br>
+        <input type="text" id="location" name="location" placeholder="Allow location access..." required>
+        <label for="radius">Radius (miles):</label>
+        <input type="range" id="radius" name="radius" min="0" max="25" oninput="this.nextElementSibling.value = this.value">
+        <output>12.5</output><br>
         <button type="submit">Search</button>
     </form>
 
@@ -104,8 +92,8 @@ document.getElementById('radius').oninput = function() {
             <div class="result">
                 <p>Name: <?php echo htmlspecialchars($business['name']); ?></p>
                 <p>Rating: <?php echo htmlspecialchars($business['rating']); ?></p>
-		<!-- <img src="<?php echo htmlspecialchars($business['image_url']); ?>" alt="Restaurant Image"> -->
                 <p>Address: <?php echo htmlspecialchars(implode(", ", $business['location']['display_address'])); ?></p>
+                <img src="<?php echo htmlspecialchars($business['image_url']); ?>" alt="Restaurant Image" style="width:100%;max-width:300px;">
             </div>
         <?php endforeach; ?>
     </div>
@@ -113,5 +101,26 @@ document.getElementById('radius').oninput = function() {
     <form action="logout.php" method="post">
         <button type="submit">Logout</button>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function setLocation(position) {
+                const locationInput = document.getElementById('location');
+                locationInput.value = `${position.coords.latitude}, ${position.coords.longitude}`;
+            }
+
+            function showError(error) {
+                console.warn(`ERROR(${error.code}): ${error.message}`);
+                const locationInput = document.getElementById('location');
+                locationInput.placeholder = "Location access denied. Please enter manually.";
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(setLocation, showError);
+            } else {
+                console.log("Geolocation is not supported by this browser.");
+            }
+        });
+    </script>
 </body>
 </html>
