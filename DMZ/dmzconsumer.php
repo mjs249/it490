@@ -1,11 +1,11 @@
 #!/usr/bin/php
 <?php
 
-require_once './vendor/autoload.php';
+require_once '/home/mike/it490/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-$API_KEY = '';
+$API_KEY = 'W4fAV8v1rrF66madh83kxapetrw1zNWrEAQD1oEFFTs06tijuXFHa9PV8v62_9f98_C3Ox54d8ILKTrMX8yAqtQDQ3nvwC8bvlk2I56BuUF0qeeqjqVJze_XiLTcZXYx';
 $API_HOST = "https://api.yelp.com";
 $SEARCH_PATH = "/v3/businesses/search";
 
@@ -48,7 +48,7 @@ function performYelpSearch($requestData) {
     return ['error' => 'Failed to fetch Yelp data'];
 }
 
-$connection = new AMQPStreamConnection('192.168.192.25', 5672, 'test', 'test');
+$connection = new AMQPStreamConnection('localhost', 5672, 'test', 'test');
 $channel = $connection->channel();
 
 $queue = 'dmz_queue';
@@ -95,3 +95,4 @@ while ($channel->is_consuming()) {
 $channel->close();
 $connection->close();
 ?>
+
