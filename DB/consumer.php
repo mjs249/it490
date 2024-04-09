@@ -1,8 +1,8 @@
 #!/usr/bin/php
 <?php
-ini_set('log_errors', 1);
-ini_set('error_log', '/home/mike/error.log');
-require_once './vendor/autoload.php';
+//ini_set('log_errors', 1);
+//ini_set('error_log', '/home/mike/error.log');
+require_once '/home/mike/oldit490/vendor/autoload.php';
 require_once 'config.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -354,7 +354,7 @@ function doRegister($username, $password, $email)
     }
 }
 
-$connection = new AMQPStreamConnection('192.168.192.25', 5672, 'test', 'test');
+$connection = new AMQPStreamConnection('localhost', 5672, 'test', 'test');
 $channel = $connection->channel();
 
 $channel->queue_declare('db_queue', false, true, false, false);
