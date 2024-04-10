@@ -1,39 +1,32 @@
 <?php
 session_start();
 
+//ini_set('display_errors', 1);
+//error_reporting(E_ALL);
+
 require_once('/home/mike/it490/path.inc');
 require_once('/home/mike/it490/get_host_info.inc');
 require_once('/home/mike/it490/rabbitMQLib.inc');
 
-
-function handleLoginRequest($username, $password) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($_POST['password'])) {
     $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
 
     $request = [
         'type' => "login",
-        'username' => trim($username),
-        'password' => trim($password)
+        'username' => trim($_POST['username']),
+        'password' => trim($_POST['password'])
     ];
-
-
-    stream_set_timeout($client->get_socket(), 5);
-
 
     $response = $client->send_request($request);
 
     if ($response && isset($response['jwt'])) {
+        //setcookie("userToken", $response['jwt'], time() + 3600, "/", "", false, true);
         setcookie("userToken", $response['jwt'], time() + 3600, "/", "", true, true); // Secure and HttpOnly 
         header('Location: welcome.php');
         exit();
     } else {
         $errorMessage = isset($response['message']) ? $response['message'] : "Login Failed!";
-        return $errorMessage;
     }
-}
-
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username']) && isset($_POST['password'])) {
-    $errorMessage = handleLoginRequest($_POST['username'], $_POST['password']);
 }
 ?>
 

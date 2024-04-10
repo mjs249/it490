@@ -5,7 +5,7 @@ require_once '/home/mike/it490/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-$API_KEY = '5W_WMhmAUGVYs_pcYR4m9zocLpjlKdk-OFxpPDNS0xJqwjxoUjXkEHugHpeDwrquzTjDPDjWTTwHAR7cPXVUCs2p7DyAYh2pypH93FHJb5Ft0bq-ThNpHeC5ztL9ZXYx';
+$API_KEY = 'ZHNgkhkCsyLHSu-cBx5EjZLl0HcJe88pwZEwnrNhazQ4bGc3_bV3ZIfXq3voImaV6wjxSZgDQeJowmqGN42wD3eZ9AYycjbagXjc5QTFsnpDM_iRcmNhnncb5gkLZnYx';
 $API_HOST = "https://api.yelp.com";
 $SEARCH_PATH = "/v3/businesses/search";
 
