@@ -1,0 +1,35 @@
+#!/bin/bash
+
+DB_NAME="deploymentDB"
+DB_USER="new"
+DB_PASS="MikeNuhaJames123!"
+DB_HOST="localhost"
+PROCESSED_DIR="/home/mike/Desktop/processed/"
+QA_DEST_DIR="mike@192.168.192.185:/home/mike/"
+
+while true; do
+    QUERY="SELECT package_name, version FROM packages WHERE status='new' AND package_name='frontend_files' ORDER BY creation_date ASC;"
+
+    while read -r PACKAGE_NAME PACKAGE_VERSION; do
+        if [[ -n "$PACKAGE_NAME" && -n "$PACKAGE_VERSION" ]]; then
+            TAR_FILE="${PROCESSED_DIR}${PACKAGE_NAME}_v${PACKAGE_VERSION}.tar.gz"
+
+            if [ -f "$TAR_FILE" ]; then
+                echo "Transferring $(basename "$TAR_FILE") to QA..."
+
+                if scp "$TAR_FILE" "$QA_DEST_DIR"; then
+                    echo "Transfer successful"
+                    UPDATE_QUERY="UPDATE packages SET status='in qa' WHERE package_name='${PACKAGE_NAME}' AND version=${PACKAGE_VERSION};"
+                    mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "$UPDATE_QUERY"
+                else
+                    echo "Failed to transfer $(basename "$TAR_FILE")."
+                fi
+            else
+                echo "File $TAR_FILE does not exist."
+            fi
+        fi
+    done < <(mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" -sN -e "$QUERY")
+
+    echo "Waiting for new packages..."
+    sleep 6
+done

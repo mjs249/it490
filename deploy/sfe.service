@@ -1,0 +1,12 @@
+[Unit]
+Description=SFE Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /home/mike/Desktop/sfe.sh
+User=mike
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

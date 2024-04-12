@@ -1,0 +1,13 @@
+[Unit]
+Description=Continuous unpack and deploy of latest frontend files
+After=network.target
+
+[Service]
+#User=mike
+#Group=mike
+WorkingDirectory=/home/mike/
+ExecStart=/bin/bash /home/mike/unpack.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
