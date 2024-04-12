@@ -40,7 +40,7 @@ $callback = function ($msg) use ($host, $db, $user, $pass, $charset) {
 
         if ($status === 'good') {
             updatePackageStatus($pdo, $packageName, $version, $status);
-            transferToProduction($packageName, $version);
+            transferToProduction($packageName, $version, determineProdIp($packageName));
         } elseif ($status === 'bad') {
             rollbackToPreviousGoodVersion($pdo, $packageName, $version);
         }
@@ -62,50 +62,40 @@ while ($channel->is_consuming()) {
 $channel->close();
 $connection->close();
 
-function rollbackToPreviousGoodVersion($pdo, $packageName, $badVersion) {
-    $stmt = $pdo->prepare("SELECT version FROM packages WHERE package_name = ? AND status = 'good' AND version < ? ORDER BY version DESC LIMIT 1");
-    $stmt->execute([$packageName, $badVersion]);
-    $row = $stmt->fetch();
-
-    if ($row) {
-        $goodVersion = $row['version'];
-        transferToProduction($packageName, $goodVersion);
-        transferToQA($packageName, $goodVersion);
-        $updateStmt = $pdo->prepare("UPDATE packages SET status = 'bad-rolledback' WHERE package_name = ? AND version = ?");
-        $updateStmt->execute([$packageName, $badVersion]);
-        echo "Rolled back $packageName from version $badVersion to $goodVersion.\n";
-    } else {
-        echo "No 'good' version found to roll back to for package $packageName.\n";
+function determineQAIp($packageName) {
+    switch ($packageName) {
+        case 'rmq_files':
+            return '192.168.192.232';
+        case 'dmz_files':
+            return '192.168.192.52';
+        case 'frontend_files':
+            return '192.168.192.185';
     }
 }
 
-function transferToQA($packageName, $goodVersion) {
-    $processedDir = '/home/mike/Desktop/processed/';
-    $qaDestDir = 'mike@192.168.192.185:/home/mike';
-    $tarFile = "{$processedDir}{$packageName}_v{$goodVersion}.tar.gz";
-
-    if (file_exists($tarFile)) {
-        $scpCommand = "scp $tarFile $qaDestDir";
-        echo "Transferring $tarFile to QA...\n";
-        shell_exec($scpCommand);
-        echo "Transfer to QA completed.\n";
-    } else {
-        echo "Tar file for $packageName version $goodVersion does not exist.\n";
+function determineProdIp($packageName) {
+    switch ($packageName) {
+        case 'rmq_files':
+            return '192.168.192.25';
+        case 'dmz_files':
+            return '192.168.192.165';
+        case 'frontend_files':
+            return '192.168.192.136';
     }
 }
 
-function transferToProduction($packageName, $goodVersion) {
+function transferToProduction($packageName, $version, $destinationIp) {
     $processedDir = '/home/mike/Desktop/processed/';
-    $productionDestDir = 'mike@192.168.192.136:/home/mike/';
-    $tarFile = "{$processedDir}{$packageName}_v{$goodVersion}.tar.gz";
+    $productionDestDir = "mike@{$destinationIp}:/home/mike/";
+    $tarFile = "{$processedDir}{$packageName}_v{$version}.tar.gz";
 
     if (file_exists($tarFile)) {
         $scpCommand = "scp $tarFile $productionDestDir";
-        echo "Transferring $tarFile to production...\n";
+        echo "Transferring $tarFile to production at $destinationIp...\n";
         shell_exec($scpCommand);
-        echo "Transfer completed.\n";
+        echo "Transfer completed to $destinationIp.\n";
     } else {
-        echo "Tar file for $packageName version $goodVersion does not exist.\n";
+        echo "Tar file for $packageName version $version does not exist.\n";
     }
 }
 
@@ -116,4 +106,36 @@ function updatePackageStatus($pdo, $packageName, $version, $newStatus) {
     echo "Updated status for $packageName version $version to $newStatus.\n";
 }
 
+function transferToQA($packageName, $version, $destinationIp) {
+    $processedDir = '/home/mike/Desktop/processed/';
+    $qaDestDir = "mike@{$destinationIp}:/home/mike/";
+    $tarFile = "{$processedDir}{$packageName}_v{$version}.tar.gz";
+
+    if (file_exists($tarFile)) {
+        $scpCommand = "scp $tarFile $qaDestDir";
+        echo "Transferring $tarFile to QA at $destinationIp...\n";
+        shell_exec($scpCommand);
+        echo "Transfer completed to QA at $destinationIp.\n";
+    } else {
+        echo "Tar file for $packageName version $version does not exist.\n";
+    }
+}
+
+function rollbackToPreviousGoodVersion($pdo, $packageName, $badVersion) {
+    $stmt = $pdo->prepare("SELECT version FROM packages WHERE package_name = ? AND status = 'good' AND version < ? ORDER BY version DESC LIMIT 1");
+    $stmt->execute([$packageName, $badVersion]);
+    $row = $stmt->fetch();
+
+    if ($row) {
+        $goodVersion = $row['version'];
+        transferToQA($packageName, $goodVersion, determineQAIp($packageName));
+        transferToProduction($packageName, $goodVersion, determineProdIp($packageName));
+        $updateStmt = $pdo->prepare("UPDATE packages SET status = 'bad-rolledback' WHERE package_name = ? AND version = ?");
+        $updateStmt->execute([$packageName, $badVersion]);
+        echo "Rolled back $packageName from version $badVersion to $goodVersion in QA and production.\n";
+    } else {
+        echo "No 'good' version found to roll back to for package $packageName.\n";
+    }
+}
 ?>
+
