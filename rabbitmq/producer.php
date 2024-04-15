@@ -1,6 +1,6 @@
 #!/usr/bin/php
 <?php
-require_once './vendor/autoload.php';
+require_once '/home/mike/oldit490/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -56,7 +56,7 @@ function forwardRequestToDB($request)
 }
 
 function forwardRequestToDMZ($request) {
-    $connection = new AMQPStreamConnection('192.168.192.25', 5672, 'test', 'test');
+    $connection = new AMQPStreamConnection('localhost', 5672, 'test', 'test');
     $channel = $connection->channel();
 
     list($callbackQueue, ,) = $channel->queue_declare("", false, false, true, false);
