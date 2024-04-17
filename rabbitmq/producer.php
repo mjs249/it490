@@ -180,6 +180,10 @@ function requestProcessor($request)
             $response = forwardRequestToDB($request);
             break;
 
+	case "addFavorite":
+		$response= forwardRequestToDB($request);
+		break;
+
         default:
             $response = ['success' => false, 'message' => "Request type not handled"];
             break;

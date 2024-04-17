@@ -377,6 +377,9 @@ $callback = function ($msg) use ($channel) {
             case "submitReview":
                 $response = submitReview($request['username'], $request['restaurantId'], $request['rating'], $request['review']);
                 break;
+            case "addFavorite":
+            	$response = submitReview($request['username'], $request['restaurantId']);
+                break;
             case "retrieveReviews":
                 $response = retrieveReviews();
                 break;
@@ -458,5 +461,29 @@ try {
     $channel->close();
     $connection->close();
 }
+function addFavorite($username, $restaurantId){
+	
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
+    if ($mysqli->connect_error) {
+        return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
+    }
+	
+
+   $stmt = $mysqli->prepare("INSERT INTO favorites (username, restaurant_id VALUES (?,?)");
+    $stmt->bind_param("si", $username, $restaurantId);
+
+    if ($stmt->execute()) {
+        $mysqli->close();
+        return ['success' => true, 'message' => 'Favorited successfully.'];
+    } else {
+        $mysqli->close();
+        return ['success' => false, 'message' => 'Failed to submit Favorite.'];
+    }
+  } catch (Exception $e) {
+        error_log("Error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Login Failed due to an unexpected error.'];
+    }
+    
+}
 ?>
