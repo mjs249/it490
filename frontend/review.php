@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
-    <?php include 'navbar.php'; ?>
+    <?php include 'navbar.html'; ?>
 
     <h1>Leave a Review</h1>
     <form action="review.php" method="post">
