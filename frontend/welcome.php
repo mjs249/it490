@@ -45,7 +45,7 @@ try {
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
-    <?php include 'navbar.php'; ?>
+    <?php include 'navbar.html'; ?>
 
 <body>
     <h1>Welcome, <?php echo htmlspecialchars($username); ?>!</h1>

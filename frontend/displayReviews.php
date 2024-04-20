@@ -49,7 +49,7 @@ $reviews = $response['reviews'] ?? [];
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
-    <?php include 'navbar.php'; ?>
+    <?php include 'navbar.html'; ?>
 
 <h1>All Reviews</h1>
 

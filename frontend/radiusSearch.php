@@ -72,7 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['locati
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
-    <?php include 'navbar.php'; ?>
+    <?php include 'navbar.html'; ?>
 
     <h1>Restaurant Search by Radius</h1>
     <form action="radiusSearch.php" method="post">
