@@ -1,0 +1,12 @@
+[Unit]
+Description=Store Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/php /home/mike/Desktop/store.php
+User=mike
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

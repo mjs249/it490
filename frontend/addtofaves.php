@@ -35,38 +35,24 @@ if (isset($_SESSION['last_search'])) {
     $term = '';
     $location = '';
 }
+
+$client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
-    $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
-
-    if (isset($_POST['submitReview'])) {
-
+    if (isset($_POST['action']) && $_POST['action'] == 'addFavorite') {
         $restaurantId = $_POST['restaurantId'];
-        $rating = $_POST['rating'];
-        $review = $_POST['review'];
-
         $request = [
-
-            'type' => "submitReview",
+            'type' => "addFavorite",
             'restaurantId' => $restaurantId,
-            'rating' => $rating,
-            'review' => $review,
             'username' => $username,
-
         ];
-
         $response = $client->send_request($request);
-
         if ($response && isset($response['success']) && $response['success']) {
-
-            $message = "Review submitted successfully!";
-
+            $message = "Added to favorites successfully!";
         } else {
-
-            $message = "Failed to submit review.";
+            $message = "Failed to add to favorites.";
         }
-    } else {
-
+    } elseif (isset($_POST['action']) && $_POST['action'] == 'search') {
         $term = $_POST['term'] ?? '';
         $location = $_POST['location'] ?? '';
         $request = [
@@ -75,21 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'term' => $term,
             'location' => $location,
         ];
-
         $response = $client->send_request($request);
-
         if (isset($response['businesses'])) {
-
             $results = $response['businesses'];
-
         } else {
-
             $message = "Failed to search Yelp. " . ($response['message'] ?? '');
         }
     }
 }
-
-
 ?>
 
 <!DOCTYPE html>
@@ -103,41 +82,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <?php include 'navbar.html'; ?>
 
-    <h1>Leave a Review</h1>
-    <form action="review.php" method="post">
+    <h1>Add A Restaurant to Your Favorites</h1>
+    <form action="addtofaves.php" method="post">
         <label for="term">Search Term:</label>
         <input type="text" id="term" name="term" value="<?php echo htmlspecialchars($term); ?>" required><br>
         <label for="location">Location:</label>
         <input type="text" id="location" name="location" value="<?php echo htmlspecialchars($location); ?>" required><br>
-        <button type="submit">Search</button>
+        <button type="submit" name="action" value="search">Search</button>
     </form>
 
     <?php if (!empty($message)): ?>
-    <p><?php echo $message; ?></p>
+        <p><?php echo $message; ?></p>
     <?php endif; ?>
 
     <div id="results">
         <h2>Results:</h2>
         <?php foreach ($results as $business): ?>
-        <div class="result">
-            <p>Name: <?php echo htmlspecialchars($business['name']); ?></p>
-            <p>Rating: <?php echo htmlspecialchars($business['rating']); ?></p>
-            <p>Address: <?php echo htmlspecialchars(implode(", ", $business['location']['display_address'])); ?></p>
-            <form action="review.php" method="post">
-                <input type="hidden" name="restaurantId" value="<?php echo htmlspecialchars($business['id']); ?>">
-                <label for="rating">Rating:</label>
-                <select name="rating" required>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
-                <label for="review">Review:</label>
-                <input type="text" name="review" required>
-                <input type="submit" name="submitReview" value="Submit Review">
-            </form>
-        </div>
+            <div class="result">
+                <p>Name: <?php echo htmlspecialchars($business['name']); ?></p>
+                <p>Rating: <?php echo htmlspecialchars($business['rating']); ?></p>
+                <p>Address: <?php echo htmlspecialchars(implode(", ", $business['location']['display_address'])); ?></p>
+                <form action="addtofaves.php" method="post">
+                    <input type="hidden" name="restaurantId" value="<?php echo htmlspecialchars($business['phone']); ?>">
+                    <button type="submit" name="action" value="addFavorite">Add To Favorites</button>
+                </form>
+            </div>
         <?php endforeach; ?>
     </div>
 
