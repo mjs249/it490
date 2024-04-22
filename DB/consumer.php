@@ -129,6 +129,7 @@ function fetchReservationsNeedingReminders() {
                             r.number_of_guests,
                             r.special_requests,
                             r.confirmation_code,
+                            r.phone,
                             u.email,
                             rest.name AS restaurant_name,
                             CONCAT(rest.address1, ', ', rest.city, ', ', rest.state, ' ', rest.zip_code, ', ', rest.country) AS restaurant_address
@@ -231,15 +232,14 @@ function storeRestaurants($restaurants) {
 }
 
 
-function makeReservation($username, $restaurantId, $date, $time, $guests, $specialRequests) {
-
+function makeReservation($username, $restaurantId, $date, $time, $guests, $phone, $specialRequests) {
     $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
     if ($mysqli->connect_error) {
         return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
     }
 
-    $sql = "INSERT INTO reservations (username, restaurant_id, reservation_date, reservation_time, number_of_guests, special_requests, confirmation_code) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO reservations (username, restaurant_id, reservation_date, reservation_time, number_of_guests, phone, special_requests, confirmation_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
@@ -248,10 +248,9 @@ function makeReservation($username, $restaurantId, $date, $time, $guests, $speci
     }
 
     $confirmationCode = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 10));
-
     $guestsInt = (int) $guests;
 
-    if (!$stmt->bind_param("ssssiss", $username, $restaurantId, $date, $time, $guestsInt, $specialRequests, $confirmationCode)) {
+    if (!$stmt->bind_param("ssssiiss", $username, $restaurantId, $date, $time, $guestsInt, $phone, $specialRequests, $confirmationCode)) {
         $stmtError = $stmt->error;
         $stmt->close();
         $mysqli->close();
@@ -270,6 +269,7 @@ function makeReservation($username, $restaurantId, $date, $time, $guests, $speci
 
     return ['success' => true, 'message' => 'Reservation made successfully.', 'confirmation_code' => $confirmationCode];
 }
+
 
 function retrieveReviews($restaurantId = null) {
 
@@ -476,12 +476,12 @@ $callback = function ($msg) use ($channel) {
                 $response = retrieveFavorites($request['username']);
                 break;
             case "makeReservation":
-                if (isset($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['specialRequests'])) {
-                    $response = makeReservation($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['specialRequests'] ?? '');
-                } else {
-                    $response = ['success' => false, 'message' => 'Missing reservation details.'];
-                }
-                break;
+		if (isset($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['phone'], $request['specialRequests'])) {
+        	    $response = makeReservation($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['phone'], $request['specialRequests'] ?? '');
+    		} else {
+        	    $response = ['success' => false, 'message' => 'Missing reservation details.'];
+   		}
+    		break;
             case "storeRestaurants":
                 if (isset($request['restaurants'])) {
                     $response = storeRestaurants($request['restaurants']);
