@@ -8,6 +8,95 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use \Firebase\JWT\JWT;
 
+function retrieveFavorites($username) {
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    if ($mysqli->connect_error) {
+        return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
+    }
+
+    $sql = "SELECT 
+                f.id AS favorite_id, 
+                f.username, 
+                f.created_at, 
+                r.id AS restaurant_id, 
+                r.name, 
+                r.image_url, 
+                r.is_closed, 
+                r.url, 
+                r.review_count, 
+                r.categories, 
+                r.rating, 
+                r.latitude, 
+                r.longitude, 
+                r.phone, 
+                r.display_phone, 
+                r.distance, 
+                r.address1,
+                r.address2, 
+                r.address3, 
+                r.alias, 
+                r.transactions, 
+                r.price, 
+                r.city, 
+                r.zip_code, 
+                r.country, 
+                r.state, 
+                r.display_address
+            FROM favorites f
+            JOIN restaurants r ON CONCAT('+', f.restaurantId) = r.phone
+            WHERE f.username = ?";
+
+    if ($stmt = $mysqli->prepare($sql)) {
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $favorites = [];
+        while ($row = $result->fetch_assoc()) {
+            $favorites[] = $row;
+        }
+
+        $stmt->close();
+        $mysqli->close();
+        return ['success' => true, 'favorites' => $favorites];
+    } else {
+        $mysqli->close();
+        return ['success' => false, 'message' => "Prepare failed: " . $mysqli->error];
+    }
+}
+
+
+function addFavorite($username, $restaurantId) {
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+    if ($mysqli->connect_error) {
+        error_log("Add Favorite Connection Error: " . $mysqli->connect_error);
+        echo "Add Favorite Connection Error: " . $mysqli->connect_error . "\n";
+        return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
+    }
+
+    $stmt = $mysqli->prepare("INSERT INTO favorites (username, restaurantId) VALUES (?, ?)");
+    if (!$stmt) {
+        error_log("Add Favorite Prepare Error: " . $mysqli->error);
+        echo "Add Favorite Prepare Error: " . $mysqli->error . "\n";
+        $mysqli->close();
+        return ['success' => false, 'message' => "Prepare failed: " . $mysqli->error];
+    }
+
+    $stmt->bind_param("si", $username, $restaurantId);
+    if (!$stmt->execute()) {
+        error_log("Add Favorite Execute Error: " . $stmt->error);
+        echo "Add Favorite Execute Error: " . $stmt->error . "\n";
+        $stmt->close();
+        $mysqli->close();
+        return ['success' => false, 'message' => "Execute failed: " . $stmt->error];
+    }
+
+    $stmt->close();
+    $mysqli->close();
+    return ['success' => true, 'message' => 'Added to favorites successfully.'];
+}
+
 function updateReminderStatus($reservationId, $reminderSent) {
     
     $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -40,6 +129,7 @@ function fetchReservationsNeedingReminders() {
                             r.number_of_guests,
                             r.special_requests,
                             r.confirmation_code,
+                            r.phone,
                             u.email,
                             rest.name AS restaurant_name,
                             CONCAT(rest.address1, ', ', rest.city, ', ', rest.state, ' ', rest.zip_code, ', ', rest.country) AS restaurant_address
@@ -142,15 +232,14 @@ function storeRestaurants($restaurants) {
 }
 
 
-function makeReservation($username, $restaurantId, $date, $time, $guests, $specialRequests) {
-
+function makeReservation($username, $restaurantId, $date, $time, $guests, $phone, $specialRequests) {
     $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
     if ($mysqli->connect_error) {
         return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
     }
 
-    $sql = "INSERT INTO reservations (username, restaurant_id, reservation_date, reservation_time, number_of_guests, special_requests, confirmation_code) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO reservations (username, restaurant_id, reservation_date, reservation_time, number_of_guests, phone, special_requests, confirmation_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
@@ -159,10 +248,9 @@ function makeReservation($username, $restaurantId, $date, $time, $guests, $speci
     }
 
     $confirmationCode = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 10));
-
     $guestsInt = (int) $guests;
 
-    if (!$stmt->bind_param("ssssiss", $username, $restaurantId, $date, $time, $guestsInt, $specialRequests, $confirmationCode)) {
+    if (!$stmt->bind_param("ssssiiss", $username, $restaurantId, $date, $time, $guestsInt, $phone, $specialRequests, $confirmationCode)) {
         $stmtError = $stmt->error;
         $stmt->close();
         $mysqli->close();
@@ -181,6 +269,7 @@ function makeReservation($username, $restaurantId, $date, $time, $guests, $speci
 
     return ['success' => true, 'message' => 'Reservation made successfully.', 'confirmation_code' => $confirmationCode];
 }
+
 
 function retrieveReviews($restaurantId = null) {
 
@@ -377,16 +466,22 @@ $callback = function ($msg) use ($channel) {
             case "submitReview":
                 $response = submitReview($request['username'], $request['restaurantId'], $request['rating'], $request['review']);
                 break;
+            case "addFavorite":
+            	$response = addFavorite($request['username'], $request['restaurantId']);
+                break;
             case "retrieveReviews":
                 $response = retrieveReviews();
                 break;
-            case "makeReservation":
-                if (isset($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['specialRequests'])) {
-                    $response = makeReservation($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['specialRequests'] ?? '');
-                } else {
-                    $response = ['success' => false, 'message' => 'Missing reservation details.'];
-                }
+            case "retrieveFavorites":
+                $response = retrieveFavorites($request['username']);
                 break;
+            case "makeReservation":
+		if (isset($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['phone'], $request['specialRequests'])) {
+        	    $response = makeReservation($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['phone'], $request['specialRequests'] ?? '');
+    		} else {
+        	    $response = ['success' => false, 'message' => 'Missing reservation details.'];
+   		}
+    		break;
             case "storeRestaurants":
                 if (isset($request['restaurants'])) {
                     $response = storeRestaurants($request['restaurants']);
