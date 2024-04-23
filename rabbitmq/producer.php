@@ -183,8 +183,15 @@ function requestProcessor($request)
         case "retrieveFavorites":
             $response = forwardRequestToDB($request);
             break;
+            
+        case "retrieveDoNotShows":
+        	$response = forwardRequestToDB($request);
+            break;
 
 	case "addFavorite":
+		$response= forwardRequestToDB($request);
+		break;
+	case "dislike":
 		$response= forwardRequestToDB($request);
 		break;
 
