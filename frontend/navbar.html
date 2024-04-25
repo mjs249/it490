@@ -7,15 +7,15 @@
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 </head>
 
-<body>
+<body style="padding-top: 60px;">
 
-<nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
   <div class="container">
     <a class="navbar-brand" href="#"></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">                                                                                                            
+    <div class="offcanvas offcanvas-end position-fixed" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">                                                                                                            
       <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Explore</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -26,34 +26,34 @@
             <a class="nav-link active" aria-current="page" href="welcome.php">Home</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="userProfile.php">Profile</a>
+            <a class="nav-link active" href="userProfile.php">Profile</a>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               Search
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="radiusSearch.php">Search by Location</a></li>
-              <li><a class="dropdown-item" href="dietaryFilter.php">Search with Dietary Filters</a></li>
+              <li><a class="dropdown-item active" href="radiusSearch.php">Search by Location</a></li>
+              <li><a class="dropdown-item active" href="dietaryFilter.php">Search with Dietary Filters</a></li>
             </ul>                                                    
           </li>
         
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               Review
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="review.php">Leave a Review</a></li>
-              <li><a class="dropdown-item" href="displayReviews.php">Show Reviews</a></li>
+              <li><a class="dropdown-item active" href="review.php">Leave a Review</a></li>
+              <li><a class="dropdown-item active" href="displayReviews.php">Show Reviews</a></li>
             </ul>                                                    
           </li>
              
            <li class="nav-item">
-            <a class="nav-link" href="booking.php">Reservations</a>
+            <a class="nav-link active" href="booking.php">Reservations</a>
           </li> 
             
             <li class="nav-item">
-            <a class="nav-link" href="showRecs.php">Recommendations</a>
+            <a class="nav-link active" href="showRecs.php">Recommendations</a>
           </li>
                                                                     
         </ul>
