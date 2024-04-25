@@ -66,6 +66,64 @@ function retrieveFavorites($username) {
     }
 }
 
+function retrieveDoNotShows($username) {
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    if ($mysqli->connect_error) {
+        return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
+    }
+
+    $sql = "SELECT 
+                f.id AS favorite_id, 
+                f.username, 
+                f.created_at, 
+                r.id AS restaurant_id, 
+                r.name, 
+                r.image_url, 
+                r.is_closed, 
+                r.url, 
+                r.review_count, 
+                r.categories, 
+                r.rating, 
+                r.latitude, 
+                r.longitude, 
+                r.phone, 
+                r.display_phone, 
+                r.distance, 
+                r.address1,
+                r.address2, 
+                r.address3, 
+                r.alias, 
+                r.transactions, 
+                r.price, 
+                r.city, 
+                r.zip_code, 
+                r.country, 
+                r.state, 
+                r.display_address
+            FROM dislikes f
+            JOIN restaurants r ON CONCAT('+', f.restaurantId) = r.phone
+            WHERE f.username = ?";
+
+    if ($stmt = $mysqli->prepare($sql)) {
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $dislikes = [];
+        while ($row = $result->fetch_assoc()) {
+            $dislikes[] = $row;
+        }
+
+        $stmt->close();
+        $mysqli->close();
+        return ['success' => true, 'dislikes' => $dislikes];
+    } else {
+        $mysqli->close();
+        return ['success' => false, 'message' => "Prepare failed: " . $mysqli->error];
+    }
+}
+
 
 function addFavorite($username, $restaurantId) {
     $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -95,6 +153,66 @@ function addFavorite($username, $restaurantId) {
     $stmt->close();
     $mysqli->close();
     return ['success' => true, 'message' => 'Added to favorites successfully.'];
+}
+
+function dislike($username, $restaurantId) {
+
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+
+
+    if ($mysqli->connect_error) {
+
+        error_log("Dislike Connection Error: " . $mysqli->connect_error);
+
+        echo "Dislike Connection Error: " . $mysqli->connect_error . "\n";
+
+        return ['success' => false, 'message' => "Connection failed: " . $mysqli->connect_error];
+
+    }
+
+
+
+    $stmt = $mysqli->prepare("INSERT INTO dislikes (username, restaurantId) VALUES (?, ?)");
+
+    if (!$stmt) {
+
+        error_log("Dislike Prepare Error: " . $mysqli->error);
+
+        echo "Dislike Prepare Error: " . $mysqli->error . "\n";
+
+        $mysqli->close();
+
+        return ['success' => false, 'message' => "Prepare failed: " . $mysqli->error];
+
+    }
+
+
+
+    $stmt->bind_param("si", $username, $restaurantId);
+
+    if (!$stmt->execute()) {
+
+        error_log("Dislike Execute Error: " . $stmt->error);
+
+        echo "Dislike Execute Error: " . $stmt->error . "\n";
+
+        $stmt->close();
+
+        $mysqli->close();
+
+        return ['success' => false, 'message' => "Execute failed: " . $stmt->error];
+
+    }
+
+
+
+    $stmt->close();
+
+    $mysqli->close();
+
+    return ['success' => true, 'message' => 'Added to dislikes successfully.'];
+
 }
 
 function updateReminderStatus($reservationId, $reminderSent) {
@@ -469,12 +587,18 @@ $callback = function ($msg) use ($channel) {
             case "addFavorite":
             	$response = addFavorite($request['username'], $request['restaurantId']);
                 break;
+            case "dislike":
+            	$response = dislike($request['username'], $request['restaurantId']);
+                break;
             case "retrieveReviews":
                 $response = retrieveReviews();
                 break;
             case "retrieveFavorites":
                 $response = retrieveFavorites($request['username']);
                 break;
+             case "retrieveDoNotShows":
+                $response = retrieveDoNotShows($request['username']);
+                break;   
             case "makeReservation":
 		if (isset($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['phone'], $request['specialRequests'])) {
         	    $response = makeReservation($request['username'], $request['restaurantId'], $request['reservationDate'], $request['reservationTime'], $request['guests'], $request['phone'], $request['specialRequests'] ?? '');
