@@ -1,0 +1,14 @@
+[Unit]
+Description=DMZ Consumer Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -c 'sleep 10; /usr/bin/php /home/mike/it490/DMZ/dmzconsumer.php'
+User=mike
+Restart=on-failure
+
+
+[Install]
+WantedBy=multi-user.target
