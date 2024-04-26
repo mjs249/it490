@@ -68,7 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['locati
 <body>
     <?php include 'navbar.html'; ?>
 
-    <h1>Restaurant Search with Dietary Filters</h1>
+    <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">Restaurant Search with Dietary Filters</h1>
     <form action="dietaryFilter.php" method="post">
         <label for="term">Search Term:</label>
         <input type="text" id="term" name="term" required><br>
