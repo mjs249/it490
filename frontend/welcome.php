@@ -48,8 +48,8 @@ try {
     <?php include 'navbar.html'; ?>
 
 <body>
-    <h1>Welcome, <?php echo htmlspecialchars($username); ?>!</h1>
-    <p>Glad you're here. You've successfully logged in. Begin your search for great food near you. Be sure to leave a few reviews along the way!</p>
+    <h1 style="color: #ef6c00; margin-top: 30px; margin-bottom: 30px;">Welcome,>
+    <p style="color: #333; margin-top: 10px; margin-bottom: 50px;">Glad you're here. You've successfully logged in. Begin your search for great food near you. Be sure to leave a few reviews along the way!</p>
     <form action="logout.php" method="post">
         <button type="submit">Logout</button>
     </form>
