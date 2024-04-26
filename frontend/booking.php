@@ -55,7 +55,6 @@ if (isset($_POST['makeReservation'])) {
     $reservationDate = $_POST['reservationDate'];
     $reservationTime = $_POST['reservationTime'];
     $guests = $_POST['guests'];
-    $phone = $_POST['phone'];
     $specialRequests = isset($_POST['specialRequests']) ? $_POST['specialRequests'] : '';
 
     $reservationRequest = [
@@ -65,7 +64,6 @@ if (isset($_POST['makeReservation'])) {
         'reservationDate' => $reservationDate,
         'reservationTime' => $reservationTime,
         'guests' => $guests,
-        'phone' => $phone,
 	'specialRequests' => $specialRequests
     ];
 
@@ -92,7 +90,7 @@ if (isset($_POST['makeReservation'])) {
 <body>
     <?php include 'navbar.html'; ?>
 
-    <h1>Book a Reservation</h1>
+    <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">Book a Reservation</h1>
     <form action="booking.php" method="post">
         <label for="term">Search Term:</label>
         <input type="text" id="term" name="term" required><br>
@@ -118,8 +116,6 @@ if (isset($_POST['makeReservation'])) {
                         <input type="time" id="reservationTime" name="reservationTime" required>
                         <label for="guests">Guests:</label>
                         <input type="number" id="guests" name="guests" min="1" required>
-			<label for="phone">Phone Number (+1):</label>
-    			<input type="tel" id="phone" name="phone" required pattern="^\+1[2-9]\d{2}[2-9](?!11)\d{2}\d{4}$" title="Phone number must start with +1 followed by 10 digits."><br>
 			<label for="specialRequests">Special Requests:</label>
 			<textarea id="specialRequests" name="specialRequests"></textarea>
 
