@@ -57,7 +57,7 @@ if (!empty($recResponse) && isset($recResponse['businesses']) && count($recRespo
 <body>
     <?php include 'navbar.html'; ?>
 
-    <h1>Today's Recommendation</h1>
+    <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">Today's Recommendation</h1>
     <?php if (!empty($recommendation)): ?>
         <div id="recommendation" class="result">
             <h2><?php echo htmlspecialchars($recommendation['name']); ?></h2>
@@ -66,7 +66,7 @@ if (!empty($recResponse) && isset($recResponse['businesses']) && count($recRespo
             <img src="<?php echo htmlspecialchars($recommendation['image_url']); ?>" alt="Restaurant Image" style="width:100%;max-width:300px;">
         </div>
     <?php else: ?>
-        <p>No recommendation available. Try again later!</p>
+        <p style="color: #333; margin-top: 10px; margin-bottom: 50px;">No recommendation available. Try again later!</p>
     <?php endif; ?>
 
     <form action="logout.php" method="post">
