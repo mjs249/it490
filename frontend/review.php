@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <?php include 'navbar.html'; ?>
 
-    <h1>Leave a Review</h1>
+    <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">Leave a Review</h1>
     <form action="review.php" method="post">
         <label for="term">Search Term:</label>
         <input type="text" id="term" name="term" value="<?php echo htmlspecialchars($term); ?>" required><br>
