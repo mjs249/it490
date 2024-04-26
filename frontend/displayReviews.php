@@ -51,7 +51,7 @@ $reviews = $response['reviews'] ?? [];
 <body>
     <?php include 'navbar.html'; ?>
 
-<h1>All Reviews</h1>
+<h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">All Reviews</h1>
 
 <div class="category-filters">
     <h3>Filter by Category:</h3>
