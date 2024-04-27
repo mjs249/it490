@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <?php include 'navbar.html'; ?>
 
-    <h1>Add A Restaurant to Your Favorites</h1>
+    <h1 style="color: #ef6c00; margin-top: 30px; margin-bottom: 30px;">Add A Restaurant to Your Favorites</h1>
     <form action="addtofaves.php" method="post">
         <label for="term">Search Term:</label>
         <input type="text" id="term" name="term" value="<?php echo htmlspecialchars($term); ?>" required><br>
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <p><?php echo $message; ?></p>
     <?php endif; ?>
 
-    <div id="results">
+    <div id="results" style="text-align: center;">
         <h2>Results:</h2>
         <?php foreach ($results as $business): ?>
             <div class="result">

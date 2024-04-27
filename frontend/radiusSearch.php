@@ -86,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['term'], $_POST['locati
         <button type="submit">Search</button>
     </form>
 
-    <div id="results">
+    <div id="results" style="text-align: center;">
         <h2>Results:</h2>
         <?php foreach ($results as $business): ?>
             <div class="result">

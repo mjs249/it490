@@ -52,8 +52,8 @@ if (!empty($favorites)) {
 </head>
 <body>
     <?php include 'navbar.html'; ?>
-    <h1>My Favorite Restaurants</h1>
-    <div id="favorites">
+    <h1 style="color: #ef6c00; margin-top: 30px; margin-bottom: 30px;">My Favorite Restaurants</h1>
+    <div id="favorites" style="text-align: center;">
         <?php if (!empty($favorites)): ?>
             <?php foreach ($favorites as $favorite): ?>
                 <div class="favorite">
