@@ -102,10 +102,10 @@ if (isset($_POST['makeReservation'])) {
     </form>
 
     <?php if (!empty($results)): ?>
-        <h2>Results:</h2>
-        <div id="results">
+        <h2 style="text-align: center;">Results:</h2>
+        <div id="results" style="text-align: center;">
             <?php foreach ($results as $business): ?>
-                <div class="result">
+                <div class="result" style="text-align: center;">
                     <img src="<?php echo htmlspecialchars($business['image_url']); ?>" alt="Restaurant Image" style="width:100px;height:100px;"><br>
                     <strong><?php echo htmlspecialchars($business['name']); ?></strong><br>
                     Rating: <?php echo htmlspecialchars($business['rating']); ?><br>
@@ -130,7 +130,7 @@ if (isset($_POST['makeReservation'])) {
         </div>
     <?php endif; ?>
 
-	        <div id="confirmation">
+	        <div id="confirmation" style="text-align: center;">
         		<?php if (isset($reservationResponse) && $reservationResponse['success']): ?>
             		<p>Reservation successful!</p>
             		<p>Your reservation is confirmed for <?php echo $reservationDate; ?> at <?php echo $reservationTime; ?>.</p>

@@ -59,7 +59,7 @@ if (!empty($recResponse) && isset($recResponse['businesses']) && count($recRespo
 
     <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">Today's Recommendation</h1>
     <?php if (!empty($recommendation)): ?>
-        <div id="recommendation" class="result">
+        <div id="recommendation" class="result" style="text-align: center;">
             <h2><?php echo htmlspecialchars($recommendation['name']); ?></h2>
             <p>Rating: <?php echo htmlspecialchars($recommendation['rating']); ?> stars</p>
             <p>Address: <?php echo htmlspecialchars(implode(", ", $recommendation['location']['display_address'])); ?></p>
