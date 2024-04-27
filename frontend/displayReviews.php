@@ -53,7 +53,7 @@ $reviews = $response['reviews'] ?? [];
 
 <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">All Reviews</h1>
 
-<div class="category-filters">
+<div class="category-filters" style="text-align: center;">
     <h3>Filter by Category:</h3>
     <label><input type="checkbox" class="filter" value="Pizza"> Pizza</label>
     <label><input type="checkbox" class="filter" value="French"> French</label>
@@ -67,7 +67,7 @@ $reviews = $response['reviews'] ?? [];
 
 </div>
 
-<div class="rating-filters">
+<div class="rating-filters" style="text-align: center;">
     <h3>Filter by Rating:</h3>
     <label><input type="checkbox" class="filter-rating" value="1.0"> 1 Star</label>
     <label><input type="checkbox" class="filter-rating" value="2.0"> 2 Stars</label>

@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <p><?php echo $message; ?></p>
     <?php endif; ?>
 
-    <div id="results">
+    <div id="results" style="text-align: center;">
         <h2>Results:</h2>
         <?php foreach ($results as $business): ?>
         <div class="result">
