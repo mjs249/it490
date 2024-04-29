@@ -1,3 +1,14 @@
+#results {
+    text-align: center;
+}
+
+.result img {
+    display: block;
+    max-width: 40%;
+    height: auto;
+    margin: 0 auto;
+}
+
 body {
     margin: 0;
     padding: 0;

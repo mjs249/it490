@@ -1,8 +1,5 @@
 <?php
-
 session_start();
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 
 require_once('./vendor/autoload.php');
 require_once('/home/mike/it490/path.inc');
@@ -27,7 +24,6 @@ try {
     exit;
 }
 
-// Create a new instance of rabbitMQClient
 $client = new rabbitMQClient("/home/mike/it490/testRabbitMQ.ini", "testServer");
 
 $request = [
@@ -35,14 +31,12 @@ $request = [
     'username' => $username,
 ];
 
-// Fetch a random search query from the user's history
 $recResponse = $client->send_request($request);
 
-$recommendation = [];
-
-if (!empty($recResponse) && isset($recResponse['businesses']) && count($recResponse['businesses']) > 0) {
-    // Pick one random restaurant from the results for recommendation
+if (!empty($recResponse) && isset($recResponse['businesses'])) {
     $recommendation = $recResponse['businesses'][array_rand($recResponse['businesses'])];
+} else {
+    echo "Error: Response is empty or does not contain businesses.";
 }
 ?>
 
@@ -58,6 +52,7 @@ if (!empty($recResponse) && isset($recResponse['businesses']) && count($recRespo
     <?php include 'navbar.html'; ?>
 
     <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">Today's Recommendation</h1>
+
     <?php if (!empty($recommendation)): ?>
         <div id="recommendation" class="result" style="text-align: center;">
             <h2><?php echo htmlspecialchars($recommendation['name']); ?></h2>

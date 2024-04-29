@@ -1,5 +1,7 @@
 #!/usr/bin/php
 <?php
+error_reporting(E_ALL);
+
 require_once '/home/mike/oldit490/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -141,25 +143,42 @@ function requestProcessor($request)
                 'username' => $request['username'],
             ];
             $randomQueryResponse = forwardRequestToDB($dbRequest);
+
             if ($randomQueryResponse['success'] && isset($randomQueryResponse['query'])) {
                 $searchTerm = $randomQueryResponse['query']['term'];
                 $searchLocation = $randomQueryResponse['query']['location'];
+
+                $dislikes = isset($randomQueryResponse['dislikes']) ? $randomQueryResponse['dislikes'] : [];
+
                 $dmzRequest = [
                     'type' => "yelpSearch",
                     'term' => $searchTerm,
                     'location' => $searchLocation,
                 ];
+
                 $dmzResponse = forwardRequestToDMZ($dmzRequest);
+
                 if ($dmzResponse['success'] && isset($dmzResponse['businesses'])) {
+                    $filteredBusinesses = array_filter($dmzResponse['businesses'], function($restaurant) use ($dislikes) {
+                        return !in_array($restaurant['phone'], $dislikes);
+                    });
+
                     $response = [
                         'success' => true,
-                        'businesses' => $dmzResponse['businesses']
+                        'businesses' => $filteredBusinesses,
+                        'dislikes' => $dislikes,
                     ];
                 } else {
-                    $response = ['success' => false, 'message' => "Failed to retrieve recommendations from DMZ"];
+                    $response = [
+                        'success' => false,
+                        'message' => "Failed to retrieve recommendations from DMZ"
+                    ];
                 }
             } else {
-                $response = ['success' => false, 'message' => "Failed to fetch random search query from DB"];
+                $response = [
+                    'success' => false,
+                    'message' => "Failed to fetch random search query from DB"
+                ];
             }
             break;
 
@@ -177,23 +196,11 @@ function requestProcessor($request)
         case "submitReview":
         case "retrieveReviews":
         case "makeReservation":
-            $response = forwardRequestToDB($request);
-            break;
-
         case "retrieveFavorites":
+        case "addFavorite":
+        case "dislike":
             $response = forwardRequestToDB($request);
             break;
-            
-        case "retrieveDoNotShows":
-        	$response = forwardRequestToDB($request);
-            break;
-
-	case "addFavorite":
-		$response= forwardRequestToDB($request);
-		break;
-	case "dislike":
-		$response= forwardRequestToDB($request);
-		break;
 
         default:
             $response = ['success' => false, 'message' => "Request type not handled"];
