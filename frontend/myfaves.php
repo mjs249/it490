@@ -1,8 +1,6 @@
 <?php
 session_start();
-ini_set('display_errors', 1);
 
-error_reporting(E_ALL);
 require_once('./vendor/autoload.php');
 require_once('/home/mike/it490/path.inc');
 require_once('/home/mike/it490/get_host_info.inc');
@@ -52,17 +50,17 @@ if (!empty($favorites)) {
 </head>
 <body>
     <?php include 'navbar.html'; ?>
-    <h1 style="color: #ef6c00; margin-top: 30px; margin-bottom: 30px;">My Favorite Restaurants</h1>
-    <div id="favorites" style="text-align: center;">
+    <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">My Favorite Restaurants</h1>
+    <div id="results">
         <?php if (!empty($favorites)): ?>
             <?php foreach ($favorites as $favorite): ?>
-                <div class="favorite">
-                    <h2><?= htmlspecialchars($favorite['name']) ?></h2>
-                    <p><strong>Phone:</strong> <?= htmlspecialchars($favorite['phone']) ?></p>
-                    <p><strong>Address:</strong> <?= htmlspecialchars($favorite['address1']) ?></p>
-                    <img src="<?= htmlspecialchars($favorite['image_url']) ?>" alt="Restaurant Image" style="max-width: 200px; height: auto;">
-                    <hr>
-                </div>
+                <div class="results">
+                <h2><?= htmlspecialchars($favorite['name']) ?></h2>
+                <p><strong>Phone:</strong> <?= htmlspecialchars($favorite['phone']) ?></p>
+                <p><strong>Address:</strong> <?= htmlspecialchars($favorite['display_address']) ?></p>
+                <img src="<?= htmlspecialchars($favorite['image_url']) ?>" alt="Restaurant Image" style="max-width: 200px; height: auto;">
+                <hr>
+            </div>
             <?php endforeach; ?>
         <?php else: ?>
             <p>No favorite restaurants found.</p>

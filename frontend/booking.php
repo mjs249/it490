@@ -1,9 +1,5 @@
 <?php
 
-session_start();
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
 require_once('./vendor/autoload.php');
 require_once('/home/mike/it490/path.inc');
 require_once('/home/mike/it490/get_host_info.inc');
@@ -55,7 +51,7 @@ if (isset($_POST['makeReservation'])) {
     $reservationDate = $_POST['reservationDate'];
     $reservationTime = $_POST['reservationTime'];
     $guests = $_POST['guests'];
-    $phone = $_POST['phone']
+    $phone = $_POST['phone'];
     $specialRequests = isset($_POST['specialRequests']) ? $_POST['specialRequests'] : '';
 
     $reservationRequest = [
@@ -102,10 +98,11 @@ if (isset($_POST['makeReservation'])) {
     </form>
 
     <?php if (!empty($results)): ?>
-        <h2 style="text-align: center;">Results:</h2>
-        <div id="results" style="text-align: center;">
+        
+        <div id="results">
+        <h2>Results:</h2>
             <?php foreach ($results as $business): ?>
-                <div class="result" style="text-align: center;">
+                <div class="result">
                     <img src="<?php echo htmlspecialchars($business['image_url']); ?>" alt="Restaurant Image" style="width:100px;height:100px;"><br>
                     <strong><?php echo htmlspecialchars($business['name']); ?></strong><br>
                     Rating: <?php echo htmlspecialchars($business['rating']); ?><br>
@@ -130,7 +127,7 @@ if (isset($_POST['makeReservation'])) {
         </div>
     <?php endif; ?>
 
-	        <div id="confirmation" style="text-align: center;">
+	        <div id="confirmation">
         		<?php if (isset($reservationResponse) && $reservationResponse['success']): ?>
             		<p>Reservation successful!</p>
             		<p>Your reservation is confirmed for <?php echo $reservationDate; ?> at <?php echo $reservationTime; ?>.</p>
