@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Restaraunts</title>
+    <title>Search Restaurants</title>
     <link rel="stylesheet" href="home.css">
 </head>
 <body>
@@ -105,10 +105,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <p><?php echo $message; ?></p>
     <?php endif; ?>
     <?php if (!empty($results)): ?> 
-        <div id="results">
+        <div id="results" style="text-align: center;">
             <h2 class="center">Results:</h2>
             <?php foreach ($results as $business): ?>
-                <div class="result">
+                <div class="result" style="text-align: center;">
                     <p>Name: <?php echo htmlspecialchars($business['name']); ?></p>
                     <img src="<?php echo htmlspecialchars($business['image_url']); ?>" alt="Restaurant Image">
                     <p>Rating: <?php echo htmlspecialchars($business['rating']); ?></p>
