@@ -41,7 +41,7 @@ try {
 <body>
     <?php include 'navbar.html'; ?>
 
-    <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">User ></h1>
+    <h1 style="color: #ef6c00; margin-top: 25px; margin-bottom: 30px;">User Profile</h1>
     <p><strong>Username: </strong><?php echo htmlspecialchars($username); ?></p>
     <p><strong>Email: </strong><?php echo htmlspecialchars($email); ?></p> 
     <form action="logout.php" method="post">
